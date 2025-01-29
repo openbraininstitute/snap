@@ -124,6 +124,8 @@ Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.
 
 Copyright (c) 2019-2024 Blue Brain Project/EPFL
 
+Copyright (c) 2025 Open Brain Institute
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License version 3
 as published by the Free Software Foundation.

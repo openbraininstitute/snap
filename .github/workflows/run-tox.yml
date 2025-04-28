@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v4
@@ -29,9 +29,11 @@ jobs:
         tox
     - name: Upload to codecov
       if: ${{matrix.python-version == '3.11'}}
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
         files: ./coverage.xml
         flags: pytest
+        verbose: true
         name: "bluepysnap-py311"

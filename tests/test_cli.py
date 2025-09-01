@@ -22,7 +22,7 @@ def test_cli_validate_circuit_no_config():
     runner = CliRunner()
     result = runner.invoke(cli, ["validate-circuit"])
     assert result.exit_code == 2
-    assert "Missing argument 'CONFIG_FILE'" in result.stdout
+    assert "Missing argument 'CONFIG_FILE'" in result.output
 
 
 def test_cli_validate_simulation_correct():
@@ -31,11 +31,11 @@ def test_cli_validate_simulation_correct():
         cli, ["validate-simulation", str(TEST_DATA_DIR / "simulation_config.json")]
     )
     assert result.exit_code == 0
-    assert click.style("No Error: Success.", fg="green") in result.stdout
+    assert click.style("No Error: Success.", fg="green") in result.output
 
 
 def test_cli_validate_simulation_no_config():
     runner = CliRunner()
     result = runner.invoke(cli, ["validate-simulation"])
     assert result.exit_code == 2
-    assert "Missing argument 'CONFIG_FILE'" in result.stdout
+    assert "Missing argument 'CONFIG_FILE'" in result.output

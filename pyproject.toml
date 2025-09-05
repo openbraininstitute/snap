@@ -1,3 +1,43 @@
+[build-system]
+requires = ["setuptools>=64", "wheel", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bluepysnap"
+dynamic = ["version"]
+description = "Simulation and Neural network Analysis Productivity layer"
+authors = [
+    {name = "Open Brain Institute"},
+    {name = "Blue Brain Project, EPFL"},
+]
+dependencies = [
+    "brain-indexer>=3.0.0",
+    "cached_property>=1.0",
+    "h5py>=3.0.1,<4.0.0",
+    "importlib_resources>=5.0.0",
+    "jsonschema>=4.0.0,<5.0.0",
+    "libsonata>=0.1.24,<1.0.0",
+    "morphio>=3.3.5,<4.0.0",
+    "morph-tool>=2.4.3,<3.0.0",
+    "numpy>=1.8",
+    "pandas>=1.0.0",
+    "click>=7.0",
+    "more-itertools>=8.2.0",
+]
+requires-python = ">=3.9"
+readme = "README.rst"
+license = {text = "LGPL-3.0"}
+
+[project.scripts]
+bluepysnap = "bluepysnap.cli:cli"
+
+[dependency-groups]
+docs = ["sphinx", "sphinx-bluebrain-theme"]
+plots = ["matplotlib>=3.0.0"]
+
+[tool.setuptools_scm]
+version_file = "bluepysnap/_version.py"
+
 [tool.black]
 line-length  =  100
 target-version  =  [

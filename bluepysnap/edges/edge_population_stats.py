@@ -37,17 +37,17 @@ class StatsHelper:
 
         source_sample = self._edge_population.source.ids(source, sample=sample)
 
-        result = {id_: 0 for id_ in source_sample}
+        result = {int(getattr(id_, "id", id_)): 0 for id_ in source_sample}
         if by == "synapses":
             connections = self._edge_population.iter_connections(
-                source_sample, target, return_synapse_count=True
+                source_sample, target, return_edge_count=True
             )
-            for pre_gid, _, synapse_count in connections:
-                result[pre_gid] += synapse_count
+            for pre_gid, _, edge_count in connections:
+                result[int(getattr(pre_gid, "id", pre_gid))] += edge_count
         else:
             connections = self._edge_population.iter_connections(source_sample, target)
             for pre_gid, _ in connections:
-                result[pre_gid] += 1
+                result[int(getattr(pre_gid, "id", pre_gid))] += 1
 
         return np.array(list(result.values()))
 
@@ -76,16 +76,16 @@ class StatsHelper:
 
         target_sample = self._edge_population.target.ids(target, sample=sample)
 
-        result = {id_: 0 for id_ in target_sample}
+        result = {int(getattr(id_, "id", id_)): 0 for id_ in target_sample}
         if by == "synapses":
             connections = self._edge_population.iter_connections(
-                source, target_sample, return_synapse_count=True
+                source, target_sample, return_edge_count=True
             )
-            for _, post_gid, synapse_count in connections:
-                result[post_gid] += synapse_count
+            for _, post_gid, edge_count in connections:
+                result[int(getattr(post_gid, "id", post_gid))] += edge_count
         else:
             connections = self._edge_population.iter_connections(source, target_sample)
             for _, post_gid in connections:
-                result[post_gid] += 1
+                result[int(getattr(post_gid, "id", post_gid))] += 1
 
         return np.array(list(result.values()))

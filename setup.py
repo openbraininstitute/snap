@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright (c) 2019, EPFL/Blue Brain Project
 
 # This file is part of BlueBrain SNAP library <https://github.com/BlueBrain/snap>
@@ -16,85 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+from setuptools import setup
 
-from setuptools import find_packages, setup
-from setuptools.command.egg_info import egg_info
-
-
-# setuptools_scm forcibly includes all files under version control into the sdist
-# See https://github.com/pypa/setuptools_scm/issues/190
-# Workaround taken from:
-# https://github.com/raiden-network/raiden/commit/3fb837e8b6e6343f65d99055459cb440e1a938ff
-class EggInfo(egg_info):
-    def __init__(self, *args, **kwargs):
-        egg_info.__init__(self, *args, **kwargs)
-        try:
-            import setuptools_scm.integration
-
-            setuptools_scm.integration.find_files = lambda _: []
-        except ImportError:
-            pass
-
-
-with open("README.rst") as f:
-    README = f.read()
-
-setup(
-    name="bluepysnap",
-    python_requires=">=3.8",
-    install_requires=[
-        "brain-indexer>=3.0.0",
-        "cached_property>=1.0",
-        "h5py>=3.0.1,<4.0.0",
-        "importlib_resources>=5.0.0",
-        "jsonschema>=4.0.0,<5.0.0",
-        "libsonata>=0.1.24,<1.0.0",
-        "morphio>=3.3.5,<4.0.0",
-        "morph-tool>=2.4.3,<3.0.0",
-        "numpy>=1.8",
-        "pandas>=1.0.0",
-        "click>=7.0",
-        "more-itertools>=8.2.0",
-    ],
-    extras_require={
-        "docs": ["sphinx", "sphinx-bluebrain-theme"],
-        "plots": ["matplotlib>=3.0.0"],
-    },
-    packages=find_packages(),
-    package_data={
-        "bluepysnap": ["schemas/*.yaml", "schemas/*/*.yaml"],
-    },
-    use_scm_version={
-        "write_to": "bluepysnap/_version.py",
-    },
-    setup_requires=[
-        "setuptools_scm",
-    ],
-    cmdclass={
-        "egg_info": EggInfo,
-    },
-    entry_points="""
-        [console_scripts]
-        bluepysnap=bluepysnap.cli:cli
-    """,
-    author="Blue Brain Project, EPFL",
-    description="Simulation and Neural network Analysis Productivity layer",
-    long_description=README,
-    long_description_content_type="text/x-rst",
-    license="LGPLv3",
-    url="https://github.com/BlueBrain/snap",
-    keywords=["SONATA", "BlueBrainProject"],
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
-        "Operating System :: POSIX",
-        "Topic :: Scientific/Engineering",
-        "Topic :: Utilities",
-        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
-    ],
-)
+setup()

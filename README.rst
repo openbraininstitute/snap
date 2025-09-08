@@ -41,8 +41,8 @@ indexed in a way to facilitate combining data from different sources (that is, b
 
 Among other dependencies, Blue Brain SNAP relies on Blue Brain Project provided libraries:
 
-- `libsonata <https://github.com/BlueBrain/libsonata>`__, for accessing SONATA files
-- `MorphIO <https://github.com/BlueBrain/MorphIO>`__, for accessing detailed morphologies
+- `libsonata <https://github.com/openbraininstitute/libsonata>`__, for accessing SONATA files
+- `MorphIO <https://github.com/openbraininstitute/MorphIO>`__, for accessing detailed morphologies
 
 Tools
 -----
@@ -119,8 +119,8 @@ License
 
 Blue Brain SNAP is licensed under the terms of the GNU Lesser General Public License version 3,
 unless noted otherwise, for example, external dependencies.
-Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.LESSER>`__ and
-`COPYING <https://github.com/BlueBrain/snap/blob/master/COPYING>`__ for details.
+Refer to `COPYING.LESSER <https://github.com/openbraininstitute/snap/blob/master/COPYING.LESSER>`__ and
+`COPYING <https://github.com/openbraininstitute/snap/blob/master/COPYING>`__ for details.
 
 Copyright (c) 2019-2024 Blue Brain Project/EPFL
 
@@ -139,19 +139,19 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-.. |build_status| image:: https://github.com/BlueBrain/snap/actions/workflows/run-tox.yml/badge.svg
+.. |build_status| image:: https://github.com/openbraininstitute/snap/actions/workflows/run-tox.yml/badge.svg
    :alt: Build Status
 
 .. |license| image:: https://img.shields.io/pypi/l/bluepysnap
-   :target: https://github.com/BlueBrain/snap/blob/master/COPYING.LESSER
+   :target: https://github.com/openbraininstitute/snap/blob/master/COPYING.LESSER
    :alt: License
 
-.. |coverage| image:: https://codecov.io/github/BlueBrain/snap/coverage.svg?branch=master
-   :target: https://codecov.io/github/BlueBrain/snap?branch=master
+.. |coverage| image:: https://codecov.io/github/openbraininstitute/snap/coverage.svg?branch=master
+   :target: https://codecov.io/github/openbraininstitute/snap?branch=master
    :alt: codecov.io
 
-.. |docs| image:: https://readthedocs.org/projects/bluebrainsnap/badge/?version=latest
-   :target: https://bluebrainsnap.readthedocs.io/
+.. |docs| image:: https://readthedocs.org/projects/openbraininstitute/badge/?version=latest
+   :target: https://openbraininstitute.readthedocs.io/
    :alt: documentation status
 
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8026852.svg

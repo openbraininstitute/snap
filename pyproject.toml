@@ -26,12 +26,12 @@ dependencies = [
 ]
 requires-python = ">=3.9"
 readme = "README.rst"
-license = {text = "LGPL-3.0"}
+license = "LGPL-3.0"
 
 [project.scripts]
 bluepysnap = "bluepysnap.cli:cli"
 
-[dependency-groups]
+[project.optional-dependencies]
 docs = ["sphinx", "sphinx-bluebrain-theme"]
 plots = ["matplotlib>=3.0.0"]
 

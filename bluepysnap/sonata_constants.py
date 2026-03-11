@@ -15,6 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Module including the sonata node and edge namespaces."""
+
 from bluepysnap.exceptions import BluepySnapError
 
 DYNAMICS_PREFIX = "@dynamics:"

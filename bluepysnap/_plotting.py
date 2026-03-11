@@ -15,6 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Plotting module for the different snap objects."""
+
 import logging
 
 import numpy as np
@@ -166,7 +167,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):
             ax.set_ylim(0, props["node_id_offset"])
             ax.set_ylabel("nodes")
         else:
-            if np.issubdtype(data.dtype, np.number):
+            if isinstance(data.dtype, np.dtype) and np.issubdtype(data.dtype, np.number):
                 # automatically expended by plt if ymin == ymax
                 ax.set_ylim(props["ymin"], props["ymax"])
             else:

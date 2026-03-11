@@ -59,6 +59,7 @@ Examples:
 
     See more examples in ``NodePopulation::get``
 """
+
 import inspect
 from collections.abc import Mapping, Sequence
 

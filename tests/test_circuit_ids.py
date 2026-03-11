@@ -280,9 +280,7 @@ class TestCircuitNodeIds:
             ('a', 1),
             ('b', 0),
             ('a', 2)],
-           names=['population', '{}'])""".format(
-            class_name, self.id_name
-        )
+           names=['population', '{}'])""".format(class_name, self.id_name)
 
         assert tested == expected
         assert repr(self.test_obj_sorted) == str(self.test_obj_sorted)

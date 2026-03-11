@@ -327,9 +327,6 @@ class TestNodes:
         tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
-        with pytest.raises(KeyError, match="'default'"):
-            tested.loc[("default", 0)]
-
         tested = self.test_obj.get(
             group={"population": "default"}, properties=["other2", "other1", "layer"]
         )

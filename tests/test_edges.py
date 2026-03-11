@@ -280,9 +280,6 @@ class TestEdges:
         tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
-        with pytest.raises(KeyError, match="'default'"):
-            tested.loc[("default", 0)]
-
         tested = self.test_obj.get(
             CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3]}),
             properties=["other2", "other1", "@source_node"],

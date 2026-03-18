@@ -33,7 +33,7 @@ bluepysnap = "bluepysnap.cli:cli"
 [project.optional-dependencies]
 docs = ["sphinx", "sphinx-bluebrain-theme"]
 plots = ["matplotlib>=3.0.0"]
-indexing = ["brain-indexer>=3.0.0"]
+indexing = ["brain-indexer>=3.1.2"]
 
 [tool.setuptools_scm]
 version_file = "bluepysnap/_version.py"

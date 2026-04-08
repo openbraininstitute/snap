@@ -70,6 +70,7 @@ autodoc_default_options = {
 autoclass_content = "both"
 
 autodoc_mock_imports = ["libsonata"]
+autodoc_use_legacy_class_based = True  # needed until `sphinx-bluebrain-theme` supports sphinx 9
 
 # autosummary settings
 autosummary_generate = True

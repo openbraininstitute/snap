@@ -169,6 +169,9 @@ def _nodes_group_to_dataframe(group, population):
     return df
 
 
+H5_CONTAINER = "H5_CONTAINER"
+
+
 def _check_bio_nodes_group(group_df, group, population, population_name):
     """Checks biophysical nodes group for errors.
 
@@ -196,12 +199,24 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
 
     if "alternate_morphologies" in population:
         for morph_type, morph_path in population["alternate_morphologies"].items():
+            if Path(morph_path).is_file():
+                if morph_type == "h5v1":
+                    morph_dirs |= {(morph_path, H5_CONTAINER)}
+                else:
+                    msg = (
+                        f"Morphology path ({morph_path})is a directory, "
+                        "but that is only suported for hdf5"
+                    )
+                    errors += BluepySnapValidationError.fatal(msg)
+                continue
             dir_errors = _check_components_dir(morph_type, population["alternate_morphologies"])
             errors += dir_errors
-            if len(dir_errors) == 0:
-                for extension, _type in EXTENSIONS_MAPPING.items():
-                    if _type == morph_type:
-                        morph_dirs |= {(morph_path, extension)}
+            if dir_errors:
+                continue
+
+            for extension, _type in EXTENSIONS_MAPPING.items():
+                if _type == morph_type:
+                    morph_dirs |= {(morph_path, extension)}
 
     if "morphologies_dir" not in population and "alternate_morphologies" not in population:
         errors.append(
@@ -215,10 +230,28 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
         for morph_path, extension in morph_dirs:
             L.debug("Checking morph files (%s): %s", extension, morph_path)
 
-            errors += _check_files(
-                f"morphology: {group_name}[{group.file.filename}]",
-                (Path(morph_path, m + "." + extension) for m in group_df["morphology"].unique()),
-            )
+            if extension == H5_CONTAINER:
+                with h5py.File(morph_path) as h5:
+                    missing = set(group_df["morphology"].unique()) - set(h5)
+                if len(missing) > MAX_MISSING_FILES_DISPLAY:
+                    msg = (
+                        f"Missing at least {len(missing)} morphologies in the container: "
+                        f"`{morph_path}`"
+                    )
+                    errors += [BluepySnapValidationError.fatal(msg)]
+                elif len(missing):
+                    errors += [
+                        BluepySnapValidationError.fatal(f"Missing `{miss}` from container")
+                        for miss in missing
+                    ]
+            else:
+                errors += _check_files(
+                    f"morphology: {group_name}[{group.file.filename}]",
+                    (
+                        Path(morph_path, m + "." + extension)
+                        for m in group_df["morphology"].unique()
+                    ),
+                )
 
     if "biophysical_neuron_models_dir" in population:
         errors += _check_components_dir("biophysical_neuron_models_dir", population)

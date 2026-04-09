@@ -307,6 +307,18 @@ def test_no_bio_component_dirs():
         }
 
 
+def test_container_bio_alternate_morphology_dir():
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        component = "h5v1"
+        fake_path = str(circuit_copy_path / "morphologies/container-morphs.h5")
+        with edit_config(config_copy_path) as config:
+            config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
+                component: fake_path
+            }
+        errors = validate(str(config_copy_path))
+        assert errors == {BluepySnapValidationError.fatal("Missing `morph-C` from container")}
+
+
 def test_invalid_bio_alternate_morphology_dir():
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         component = "neurolucida-asc"

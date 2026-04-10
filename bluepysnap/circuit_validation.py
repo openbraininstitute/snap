@@ -169,9 +169,6 @@ def _nodes_group_to_dataframe(group, population):
     return df
 
 
-H5_CONTAINER = "H5_CONTAINER"
-
-
 def _check_bio_nodes_group(group_df, group, population, population_name):
     """Checks biophysical nodes group for errors.
 
@@ -201,7 +198,7 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
         for morph_type, morph_path in population["alternate_morphologies"].items():
             if Path(morph_path).is_file():
                 if morph_type == "h5v1":
-                    morph_dirs |= {(morph_path, H5_CONTAINER)}
+                    morph_dirs |= {(morph_path, "h5")}
                 else:
                     msg = (
                         f"Morphology path `{morph_path}` is a file, "
@@ -230,7 +227,7 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
         for morph_path, extension in morph_dirs:
             L.debug("Checking morph files (%s): %s", extension, morph_path)
 
-            if extension == H5_CONTAINER:
+            if extension == "h5" and Path(morph_path).is_file():
                 with h5py.File(morph_path) as h5:
                     missing = set(group_df["morphology"].unique()) - set(h5)
                 if len(missing) > MAX_MISSING_FILES_DISPLAY:

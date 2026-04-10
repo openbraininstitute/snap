@@ -318,6 +318,7 @@ def test_container_bio_alternate_morphology_dir():
         errors = validate(str(config_copy_path))
         assert errors == {BluepySnapValidationError.fatal("Missing `morph-C` from container")}
 
+
 @patch("bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY", 0)
 def test_container_bio_alternate_morphology_dir_missing_many():
     with copy_test_data() as (circuit_copy_path, config_copy_path):
@@ -330,6 +331,7 @@ def test_container_bio_alternate_morphology_dir_missing_many():
         errors = validate(str(config_copy_path))
         msg = f"Missing at least 1 morphologies in the container: `{fake_path}`"
         assert errors == {BluepySnapValidationError.fatal(msg)}
+
 
 def test_container_non_h5():
     with copy_test_data() as (circuit_copy_path, config_copy_path):

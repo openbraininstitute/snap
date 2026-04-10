@@ -204,10 +204,10 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
                     morph_dirs |= {(morph_path, H5_CONTAINER)}
                 else:
                     msg = (
-                        f"Morphology path ({morph_path})is a directory, "
-                        "but that is only suported for hdf5"
+                        f"Morphology path `{morph_path}` is a file, "
+                        "but that is only suported for h5v1"
                     )
-                    errors += BluepySnapValidationError.fatal(msg)
+                    errors += [BluepySnapValidationError.fatal(msg)]
                 continue
             dir_errors = _check_components_dir(morph_type, population["alternate_morphologies"])
             errors += dir_errors

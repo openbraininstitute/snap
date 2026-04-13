@@ -1,3 +1,4 @@
+$schema: https://json-schema.org/draft/2020-12/schema
 title: Nodes - biophysical
 description: schema for biophysical node types
 allOf: [{ $ref: "#/$node_file_defs/nodes_file_root" }]

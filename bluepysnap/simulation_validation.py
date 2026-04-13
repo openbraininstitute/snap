@@ -284,7 +284,7 @@ def _validate_spike_file_contents(input_, config, prefix):
     try:
         spike_ids = _get_ids_from_spike_file(_resolve_path(input_["spike_file"], config))
     except IOError as e:
-        return [BluepySnapValidationError.fatal(f"{prefix}: {' '.join(map(str,e.args))}")]
+        return [BluepySnapValidationError.fatal(f"{prefix}: {' '.join(map(str, e.args))}")]
 
     if nodeset := input_.get("source"):
         sim_ids = _get_ids_from_node_set(nodeset, config)

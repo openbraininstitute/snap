@@ -7,6 +7,7 @@ import importlib_resources
 import jsonschema
 import numpy as np
 import yaml
+from referencing import Registry, Resource
 
 from bluepysnap.exceptions import BluepySnapValidationError
 
@@ -236,13 +237,14 @@ def validate_edges_schema(path, edges_type, virtual, ignore_datatype_errors):
     return _wrap_errors(path, errors, "/", ignore_datatype_errors)
 
 
-def _resolve_types(resolver, types):
-    """Use jsonschema `resolver` to resolve the `types` dict."""
+def _resolve_types(registry, types):
+    """Use jsonschema `registry` to resolve the `types` dict."""
     cache = {}
 
     def _resolve_type(type_):
         if type_ not in cache:
-            type_ = resolver.resolve(type_)[1]["properties"]["datatype"]["const"]
+            resolved = registry.resolver().lookup(type_)
+            type_ = resolved.contents["properties"]["datatype"]["const"]
             if hasattr(np, type_):
                 cache[type_] = getattr(np, type_)
             elif type_ == "utf-8":
@@ -253,9 +255,11 @@ def _resolve_types(resolver, types):
     return {k: _resolve_type(v["$ref"]) for k, v in types.items()}
 
 
-def _get_reference_resolver(schema):
-    """Get reference resolver for the given schema."""
-    return jsonschema.validators.RefResolver("", schema)
+def _get_jsonschema_registry(schema):
+    """Get registry for the given schema."""
+    resource = Resource.from_contents(schema)
+    registry = Registry().with_resource("", resource)
+    return registry
 
 
 def nodes_schema_types(nodes_type):
@@ -268,7 +272,7 @@ def nodes_schema_types(nodes_type):
         dict: name -> type of column
     """
     schema = _parse_schema("node", nodes_type)
-    resolver = _get_reference_resolver(schema)
+    registry = _get_jsonschema_registry(schema)
 
     schema = schema["$node_file_defs"]["nodes_file_root"]["properties"]["nodes"]
     schema = schema["patternProperties"][""]["properties"]["0"]["properties"]
@@ -276,7 +280,7 @@ def nodes_schema_types(nodes_type):
     del schema["dynamics_params"]
     del schema["@library"]
 
-    return _resolve_types(resolver, schema), _resolve_types(resolver, dynamics_params)
+    return _resolve_types(registry, schema), _resolve_types(registry, dynamics_params)
 
 
 def edges_schema_types(edges_type, virtual):
@@ -293,11 +297,11 @@ def edges_schema_types(edges_type, virtual):
         edges_type += "_virtual"
 
     schema = _parse_schema("edge", edges_type)
-    resolver = _get_reference_resolver(schema)
+    registry = _get_jsonschema_registry(schema)
 
     schema = schema["$edge_file_defs"]["edges_file_root"]["properties"]["edges"]
     schema = schema["patternProperties"][""]["properties"]["0"]["properties"]
     del schema["@library"]
     del schema["synapse_id"]
 
-    return _resolve_types(resolver, schema)
+    return _resolve_types(registry, schema)

@@ -307,6 +307,45 @@ def test_no_bio_component_dirs():
         }
 
 
+def test_container_bio_alternate_morphology_dir():
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        component = "h5v1"
+        fake_path = str(circuit_copy_path / "morphologies/container-morphs.h5")
+        with edit_config(config_copy_path) as config:
+            config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
+                component: fake_path
+            }
+        errors = validate(str(config_copy_path))
+        assert errors == {BluepySnapValidationError.fatal("Missing `morph-C` from container")}
+
+
+@patch("bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY", 0)
+def test_container_bio_alternate_morphology_dir_missing_many():
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        component = "h5v1"
+        fake_path = str(circuit_copy_path / "morphologies/container-morphs.h5")
+        with edit_config(config_copy_path) as config:
+            config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
+                component: fake_path
+            }
+        errors = validate(str(config_copy_path))
+        msg = f"Missing at least 1 morphologies in the container: `{fake_path}`"
+        assert errors == {BluepySnapValidationError.fatal(msg)}
+
+
+def test_container_non_h5():
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        component = "neurolucida-asc"
+        fake_path = str(circuit_copy_path / "morphologies/container-morphs.h5")
+        with edit_config(config_copy_path) as config:
+            config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
+                component: fake_path
+            }
+        errors = validate(str(config_copy_path))
+        msg = f"Morphology path `{fake_path}` is a file, but that is only suported for h5v1"
+        assert errors == {BluepySnapValidationError.fatal(msg)}
+
+
 def test_invalid_bio_alternate_morphology_dir():
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         component = "neurolucida-asc"

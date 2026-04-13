@@ -1,3 +1,4 @@
+$schema: https://json-schema.org/draft/2020-12/schema
 title: Edge file definitions
 description: schema definitions that apply to all edge files
 $edge_file_defs:

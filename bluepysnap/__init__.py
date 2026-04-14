@@ -1,4 +1,5 @@
 # Copyright (c) 2019, EPFL/Blue Brain Project
+# Copyright (c) 2025-2026, Open Brain Institute
 #
 # This file is part of BlueBrain SNAP library <https://github.com/BlueBrain/snap>
 #
@@ -26,3 +27,10 @@ try:
     from bluepysnap._version import version as __version__
 except ImportError:  # pragma: no cover
     __version__ = "unknown"
+
+__all__ = [
+    "Circuit",
+    "Config",
+    "BluepySnapError",
+    "Simulation",
+]

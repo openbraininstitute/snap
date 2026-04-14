@@ -2,11 +2,10 @@ import json
 from pathlib import Path
 
 import pytest
+from utils import TEST_DATA_DIR, copy_config, edit_config
 
 import bluepysnap.config as test_module
 from bluepysnap.exceptions import BluepySnapError
-
-from utils import TEST_DATA_DIR, copy_config, edit_config
 
 
 def parse(path):

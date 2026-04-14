@@ -394,7 +394,7 @@ def _check_edges_node_ids(nodes_ds, nodes):
         elif f"nodes/{node_population_name}" in h5f:
             errors.append(
                 BluepySnapValidationError.fatal(
-                    (f"{nodes_ds.name} does not have node ids in its node population")
+                    f"{nodes_ds.name} does not have node ids in its node population"
                 )
             )
 

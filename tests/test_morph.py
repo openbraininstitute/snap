@@ -4,14 +4,13 @@ import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
+from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_config
 
 import bluepysnap.morph as test_module
 from bluepysnap.circuit import Circuit
 from bluepysnap.circuit_ids_types import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
-
-from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_config
 
 
 class TestMorphHelper:

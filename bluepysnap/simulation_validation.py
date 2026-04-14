@@ -223,7 +223,7 @@ def _get_ids_from_spike_file(file_):
         populations = spikes.get_population_names()
         return {pop: set(spikes[pop].get_dict()["node_ids"]) for pop in populations}
 
-    raise IOError(f"Unsupported file type: '{suffix}' (supported: '.h5')")
+    raise OSError(f"Unsupported file type: '{suffix}' (supported: '.h5')")
 
 
 def _get_ids_from_node_set(node_set, config):
@@ -283,7 +283,7 @@ def _compare_ids(sub_ids, super_ids, super_source, prefix):
 def _validate_spike_file_contents(input_, config, prefix):
     try:
         spike_ids = _get_ids_from_spike_file(_resolve_path(input_["spike_file"], config))
-    except IOError as e:
+    except OSError as e:
         return [BluepySnapValidationError.fatal(f"{prefix}: {' '.join(map(str, e.args))}")]
 
     if nodeset := input_.get("source"):

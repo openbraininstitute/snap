@@ -3,12 +3,11 @@ import logging
 import tempfile
 
 import pytest
+from utils import TEST_DATA_DIR
 
 import bluepysnap.circuit as test_module
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Edge, Node
-
-from utils import TEST_DATA_DIR
 
 
 def test_partial_circuit_config_minimal():

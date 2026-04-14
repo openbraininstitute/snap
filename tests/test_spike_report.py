@@ -7,6 +7,7 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 from libsonata import SpikeReader
+from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 import bluepysnap.spike_report as test_module
 from bluepysnap.bbp import Cell
@@ -14,8 +15,6 @@ from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.simulation import Simulation
-
-from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 try:
     Output = libsonata._libsonata.Output

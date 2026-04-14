@@ -5,6 +5,7 @@ import warnings
 
 import libsonata
 import pytest
+from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 import bluepysnap.simulation as test_module
 from bluepysnap.exceptions import BluepySnapError
@@ -16,8 +17,6 @@ from bluepysnap.frame_report import (
 )
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.spike_report import PopulationSpikeReport, SpikeReport
-
-from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 try:
     Run = libsonata._libsonata.Run

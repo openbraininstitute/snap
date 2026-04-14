@@ -10,6 +10,12 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 from numpy import dtype
+from utils import (
+    PICKLED_SIZE_ADJUSTMENT,
+    TEST_DATA_DIR,
+    assert_array_equal_strict,
+    create_node_population,
+)
 
 from bluepysnap.bbp import Cell
 from bluepysnap.circuit import Circuit
@@ -18,13 +24,6 @@ from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE, Node
-
-from utils import (
-    PICKLED_SIZE_ADJUSTMENT,
-    TEST_DATA_DIR,
-    assert_array_equal_strict,
-    create_node_population,
-)
 
 
 class TestNodePopulation:

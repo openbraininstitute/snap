@@ -5,14 +5,13 @@ import h5py
 import libsonata
 import numpy as np
 import pytest
+from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_config
 
 import bluepysnap.neuron_models as test_module
 from bluepysnap.circuit import Circuit, CircuitConfig
 from bluepysnap.circuit_ids_types import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
-
-from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_config
 
 
 def test_invalid_model_type():

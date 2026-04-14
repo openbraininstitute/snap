@@ -5,6 +5,7 @@ import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
+from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 import bluepysnap.edges as test_module
 from bluepysnap.bbp import Synapse
@@ -12,8 +13,6 @@ from bluepysnap.circuit import Circuit
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
-
-from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 
 class TestEdges:

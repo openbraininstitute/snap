@@ -6,12 +6,11 @@ import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
+from utils import setup_tempdir
 
 import bluepysnap.circuit_ids as test_module
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
-
-from utils import setup_tempdir
 
 
 def _multi_index():
@@ -276,11 +275,11 @@ class TestCircuitNodeIds:
     def test_printing(self):
         tested = self.test_obj_unsorted.__repr__()
         class_name = self.test_obj_sorted.__class__.__name__
-        expected = """{}([('a', 0),
+        expected = f"""{class_name}([('a', 0),
             ('a', 1),
             ('b', 0),
             ('a', 2)],
-           names=['population', '{}'])""".format(class_name, self.id_name)
+           names=['population', '{self.id_name}'])"""
 
         assert tested == expected
         assert repr(self.test_obj_sorted) == str(self.test_obj_sorted)

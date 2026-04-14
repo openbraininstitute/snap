@@ -4,11 +4,10 @@ import re
 import libsonata
 import pytest
 from numpy.testing import assert_array_equal
+from utils import TEST_DATA_DIR
 
 import bluepysnap.node_sets as test_module
 from bluepysnap.exceptions import BluepySnapError
-
-from utils import TEST_DATA_DIR
 
 
 class TestNodeSet:

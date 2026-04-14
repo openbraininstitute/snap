@@ -3,11 +3,10 @@ from unittest.mock import Mock, patch
 import h5py
 import numpy as np
 import pytest
+from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 import bluepysnap.circuit_validation as test_module
 from bluepysnap.exceptions import BluepySnapValidationError
-
-from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 
 @patch("bluepysnap.schemas.validate_nodes_schema")

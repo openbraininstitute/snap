@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
+from utils import TEST_DATA_DIR
 
 import bluepysnap.utils as test_module
 from bluepysnap.circuit_ids_types import CircuitEdgeId, CircuitNodeId
@@ -10,8 +11,6 @@ from bluepysnap.exceptions import (
     BluepySnapError,
 )
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
-
-from utils import TEST_DATA_DIR
 
 
 def test_load_json():

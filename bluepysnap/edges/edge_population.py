@@ -527,7 +527,6 @@ class EdgePopulation:
 
     def _add_circuit_ids(self, its):
         """Completes the CircuitNodeId."""
-
         return (
             (
                 CircuitNodeId(self.source.name, source_id),
@@ -539,7 +538,6 @@ class EdgePopulation:
 
     def _add_edge_ids(self, its):
         """Completes the CircuitNodeId and adds the CircuitEdgeIds."""
-
         return (
             (
                 CircuitNodeId(self.source.name, source_id),
@@ -551,7 +549,6 @@ class EdgePopulation:
 
     def _omit_edge_count(self, its):
         """Completes the CircuitNodeId and removes the edge count."""
-
         return (
             (
                 CircuitNodeId(self.source.name, source_id),

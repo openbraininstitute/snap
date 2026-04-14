@@ -1,0 +1,16 @@
+title: Edges - Allen Point Process
+description: schema for Allen Point Process
+allOf: [{ $ref: "#/$edge_file_defs/edges_file_root" }]
+properties:
+  edges:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              # https://sonata-extension.readthedocs.io/en/latest/sonata_tech.html#fields-for-allen-s-point-neuron-connection-type-edges
+              - afferent_section_id
+              - afferent_section_pos
+              - conductance
+              - delay

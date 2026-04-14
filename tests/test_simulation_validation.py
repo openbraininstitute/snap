@@ -596,7 +596,7 @@ def test_validate_network():
 
     path = "fake_path"
     config = {**base_config, "network": path}
-    expected = [BluepySnapValidationError.fatal(f"network: No such file: {TEST_DATA_DIR/path}")]
+    expected = [BluepySnapValidationError.fatal(f"network: No such file: {TEST_DATA_DIR / path}")]
     assert test_module.validate_network(config) == expected
 
     empty_network = {**base_config, "network": ""}
@@ -792,7 +792,7 @@ def test__validate_electrodes_file():
     path = "./fake_path"
     prefix = "run.electrodes_file"
     expected = [
-        BluepySnapValidationError.fatal(f"{prefix}: No such file: {TEST_DATA_DIR/path}"),
+        BluepySnapValidationError.fatal(f"{prefix}: No such file: {TEST_DATA_DIR / path}"),
         BluepySnapValidationError.fatal(f"{prefix}: Can not validate file contents"),
     ]
     config = {"run": {"electrodes_file": path}, "_config_dir": TEST_DATA_DIR}

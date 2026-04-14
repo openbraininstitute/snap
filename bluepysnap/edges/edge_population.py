@@ -167,7 +167,7 @@ class EdgePopulation:
         Examples:
             >>> from bluepysnap.sonata_constants import Edge
             >>> print(my_edge_population.container_property_names(Edge))
-            >>> ["AXONAL_DELAY", "SYN_WEIGHT"] # values you can use with my_edge_population
+            >>> ["AXONAL_DELAY", "SYN_WEIGHT"]  # values you can use with my_edge_population
         """
         if not inspect.isclass(container) or not issubclass(container, ConstContainer):
             raise BluepySnapError("'container' must be a subclass of ConstContainer")

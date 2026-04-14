@@ -543,12 +543,10 @@ def test_invalid_edge_node_ids():
                 "/edges/default/target_node_id misses node ids in its node population: [99999]",
             ),
             BluepySnapValidationError.fatal(
-                f"Population {edges_file} edges [99999] have node ids [0 1] instead of "
-                "single id 2",
+                f"Population {edges_file} edges [99999] have node ids [0 1] instead of single id 2",
             ),
             BluepySnapValidationError.fatal(
-                f"Population {edges_file} edges [99999] have node ids [0 1] instead of "
-                "single id 0",
+                f"Population {edges_file} edges [99999] have node ids [0 1] instead of single id 0",
             ),
         }
 

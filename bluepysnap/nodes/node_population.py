@@ -40,16 +40,16 @@ Examples:
     >>> nodes.ids(group=1)  #  returns the single ID if present in population
     >>> #  returns the single ID if present in population and the circuit id population
     >>> #  corresponds to nodes.name
-    >>> nodes.ids(group=CircuitNodeId('pop', 1))
-    >>> nodes.ids(group=[1,2,3])  # returns list of IDs if all present in population
+    >>> nodes.ids(group=CircuitNodeId("pop", 1))
+    >>> nodes.ids(group=[1, 2, 3])  # returns list of IDs if all present in population
     >>> #  returns list of IDs if all present in population
-    >>> nodes.ids(group=CircuitNodeIds.from_dict({"pop": [0, 1,2]}))
+    >>> nodes.ids(group=CircuitNodeIds.from_dict({"pop": [0, 1, 2]}))
     >>> nodes.ids(group="node_set_name")  # returns list of IDs matching node set
-    >>> nodes.ids(group={ Node.LAYER: 2})  # returns list of IDs matching layer==2
-    >>> nodes.ids(group={ Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
-    >>> nodes.ids(group={ Node.X: (0, 1)})  # returns list of IDs with 0 < x < 1
+    >>> nodes.ids(group={Node.LAYER: 2})  # returns list of IDs matching layer==2
+    >>> nodes.ids(group={Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
+    >>> nodes.ids(group={Node.X: (0, 1)})  # returns list of IDs with 0 < x < 1
     >>> # returns list of IDs of biophysical node populations
-    >>> nodes.ids(group={ "population_type": "biophysical"})
+    >>> nodes.ids(group={"population_type": "biophysical"})
     >>> # returns list of IDs matching one of the queries inside the 'or' list
     >>> nodes.ids(group={'$or': [{ Node.LAYER: [2, 3]},
     >>>                          { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
@@ -283,7 +283,7 @@ class NodePopulation:
         Examples:
             >>> from bluepysnap.sonata_constants import Node
             >>> print(my_node_population.container_property_names(Node))
-            >>> ["X", "Y", "Z"] # values from Node that you can use with my_node_population
+            >>> ["X", "Y", "Z"]  # values from Node that you can use with my_node_population
             >>> my_node_population.property_values(Node.X)
             >>> my_node_population.property_values(Node.get("X"))
         """
@@ -342,7 +342,7 @@ class NodePopulation:
             min_id = min(node_ids)
         if min_id < 0 or max_id >= self.size:
             raise BluepySnapError(
-                f"All node IDs must be >= 0 and < {self.size} " f"for population '{self.name}'"
+                f"All node IDs must be >= 0 and < {self.size} for population '{self.name}'"
             )
 
     def _check_properties(self, properties):
@@ -362,8 +362,8 @@ class NodePopulation:
         together.
 
         Examples:
-            >>> _node_ids_by_filter({ Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
-            >>> _node_ids_by_filter({ Node.LAYER: [2, 3] })
+            >>> _node_ids_by_filter({Node.X: (0, 1), Node.MTYPE: "L1_SLAC"})
+            >>> _node_ids_by_filter({Node.LAYER: [2, 3]})
             >>> _node_ids_by_filter({'$or': [{ Node.LAYER: [2, 3]},
             >>>                              { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
 

@@ -56,6 +56,8 @@ select = [
 ]
 ignore = [
     "S101", # allow `assert`
+    "E731", # Do not assign a `lambda` expression, use a `def`
+    "E741", # Ambiguous variable name: `l`
 ]
 
 [tool.ruff.lint.pydocstyle]

@@ -275,7 +275,7 @@ class TestPopulationSpikeReport:
         test_module.__name__ + ".PopulationSpikeReport.resolve_nodes",
         return_value=np.asarray([0, 4]),
     )
-    def test_get_not_in_report(self, _):
+    def test_get_not_in_report1(self, _):
         pdt.assert_series_equal(self.test_obj.get([0, 4]), _create_series([0, 0], [0.2, 1.3]))
 
     def test_node_ids(self):

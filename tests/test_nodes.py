@@ -43,7 +43,7 @@ class TestNodes:
         assert values[1].name == "default2"
 
     def test_items(self):
-        keys, values = zip(*self.test_obj.items())
+        keys, values = zip(*self.test_obj.items(), strict=True)
         assert keys == ("default", "default2")
         assert isinstance(values[0], test_module.NodePopulation)
         assert values[0].name == "default"
@@ -465,7 +465,7 @@ class TestNodes:
             pickle.dump(self.test_obj, fd)
 
         with open(pickle_path, "rb") as fd:
-            test_obj = pickle.load(fd)
+            test_obj = pickle.load(fd)  # noqa: S301
 
         assert pickle_path.stat().st_size < 100 + PICKLED_SIZE_ADJUSTMENT
         assert test_obj.size == 7

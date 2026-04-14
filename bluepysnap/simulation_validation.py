@@ -495,6 +495,7 @@ def validate(config_file, print_errors=True, ignore_datatype_errors=False):
     Args:
         config_file (str): path to Sonata simulation config file
         print_errors (bool): print errors
+        ignore_datatype_errors (bool): Don't check if datatypes are correct
 
     Returns:
         set: set of errors, empty if no errors

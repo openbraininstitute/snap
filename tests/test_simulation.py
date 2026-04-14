@@ -169,7 +169,7 @@ def test_pickle(tmp_path):
         pickle.dump(simulation, fd)
 
     with open(pickle_path, "rb") as fd:
-        simulation = pickle.load(fd)
+        simulation = pickle.load(fd)  # noqa: S301
 
     assert pickle_path.stat().st_size < 70 + PICKLED_SIZE_ADJUSTMENT
     assert simulation.dt == 0.01

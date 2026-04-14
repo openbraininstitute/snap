@@ -746,7 +746,7 @@ class TestEdgePopulation:
             pickle.dump(self.test_obj, fd)
 
         with open(pickle_path, "rb") as fd:
-            edge_population = pickle.load(fd)
+            edge_population = pickle.load(fd)  # noqa: S301
 
         assert pickle_path.stat().st_size < 130 + PICKLED_SIZE_ADJUSTMENT
         assert edge_population.name == "default"

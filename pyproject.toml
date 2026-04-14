@@ -75,6 +75,9 @@ convention = "google"
     "S106",    # Magic value
     "SIM117",  # Use a single `with` statement with multiple contexts
     "SLF001",  # private member access
+    "B018",    # Found useless expression. Either assign it to a variable or remove it.
+    "S108",    # Probable insecure usage of temporary file or directory
+    "E501",    # Line too long
 ]
 
 [tool.ruff.lint.pylint]

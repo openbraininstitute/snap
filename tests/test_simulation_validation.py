@@ -218,7 +218,7 @@ def test_validate_conditions():
 def test__validate_mod_override_no_neurodamus():
     expected_message = "test: Can not validate: Neurodamus not found in environment"
     expected = [BluepySnapValidationError.warning(expected_message)]
-    test_module._validate_mod_override("fake", prefix="test") == expected
+    assert test_module._validate_mod_override("fake", prefix="test") == expected
 
 
 @patch.object(test_module, "NEURODAMUS_PRESENT", new=True)

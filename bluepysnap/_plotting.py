@@ -47,6 +47,7 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):
     This plot shows the number of nodes firing during a range of time.
 
     Args:
+        filtered_report: a `Filtered*Report`
         time_binsize(None/int/float): bin size (milliseconds). If None, a binning heuristic is used
             to create an histogram with ~100 spikes per bin in average.
         ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
@@ -96,6 +97,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):
     node_ids or any properties present in the different node populations.
 
     Args:
+        filtered_report: a `Filtered*Report`
         y_axis (None/str): The property to display on the y axis. None is node_ids.
         ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
 
@@ -192,6 +194,7 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):
     This plots show the binned time/frequency interval between to spikes for neurons.
 
     Args:
+        filtered_report: a `Filtered*Report`
         use_frequency(bool): use inverse interspike interval times (Hz)
         binsize(None/int/float): bin size in milliseconds or Hz. If None is used the binning is
             delegated to matplolib and is done automatically.
@@ -246,6 +249,7 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y, dt=20
     in a coordinate system corresponding to the x, y or z axis of the circuit.
 
     Args:
+        filtered_report: a `Filtered*Report`
         x_axis (str): Node enum that will determine the animation x_axis
         y_axis (str): Node enum that will determine the animation y_axis
         dt (int) : the time bin size of each frame in the video in ms
@@ -340,6 +344,7 @@ def frame_trace(filtered_report, plot_type="mean", ax=None):
     """Returns a plot displaying the voltage of a node or a compartment as a function of time.
 
     Args:
+        filtered_report: a `Filtered*Report`
         plot_type (str): string either `all` or `mean`. `all` will plot the first 15 traces from the
             group. `mean` will plot the mean value of the node
         ax: A plot axis object that will be updated

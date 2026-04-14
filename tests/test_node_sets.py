@@ -83,7 +83,7 @@ class TestNodeSets:
         assert "Layer23" in self.test_obj
         assert "find_me_you_will_not" not in self.test_obj
         with pytest.raises(BluepySnapError, match="Unexpected type"):
-            42 in self.test_obj
+            assert 42 in self.test_obj
 
     def test_getitem(self):
         assert isinstance(self.test_obj["Layer23"], test_module.NodeSet)

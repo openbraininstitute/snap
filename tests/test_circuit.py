@@ -91,7 +91,7 @@ def test_pickle(tmp_path):
         pickle.dump(circuit, fd)
 
     with open(pickle_path, "rb") as fd:
-        circuit = pickle.load(fd)
+        circuit = pickle.load(fd)  # noqa: S301
 
     assert pickle_path.stat().st_size < 60 + PICKLED_SIZE_ADJUSTMENT
     assert list(circuit.edges) == ["default", "default2"]

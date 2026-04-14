@@ -79,6 +79,12 @@ convention = "google"
     "S108",    # Probable insecure usage of temporary file or directory
     "E501",    # Line too long
 ]
+"doc/source/notebooks/*.ipynb" = [
+    "E501", # Line too long
+    "B905", # `zip()` without an explicit `strict=` parameter
+    "D103", # Missing docstring in public function
+    "S310", # Audit URL open for permitted schemes.
+]
 
 [tool.ruff.lint.pylint]
 # Maximum number of arguments for function / method

@@ -293,7 +293,7 @@ class TestCircuitNodeIds:
 
     def test___iter__(self):
         assert list(self.test_obj_sorted) == [("a", 0), ("a", 1), ("a", 2), ("b", 0)]
-        assert all(type(cid) == self.id_cls for cid in self.test_obj_sorted)
+        assert all(isinstance(cid, self.id_cls) for cid in self.test_obj_sorted)
 
     def test___getitem__(self):
         assert self.test_obj_sorted[0] == self.id_cls("a", 0)

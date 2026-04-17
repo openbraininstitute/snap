@@ -7,12 +7,11 @@ from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy.testing as npt
 import pytest
+from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 import bluepysnap.simulation_validation as test_module
 from bluepysnap.exceptions import BluepySnapValidationError
 from bluepysnap.node_sets import NodeSets
-
-from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 
 def test__resolve_path():
@@ -87,7 +86,7 @@ def test__add_validation_parameters():
 
 def test__silent_neurodamus():
     neurodamus = MagicMock()
-    setattr(test_module, "neurodamus", neurodamus)
+    test_module.neurodamus = neurodamus
 
     # Sanity check to check that testing methodology is valid
     stderr = io.StringIO()
@@ -219,7 +218,7 @@ def test_validate_conditions():
 def test__validate_mod_override_no_neurodamus():
     expected_message = "test: Can not validate: Neurodamus not found in environment"
     expected = [BluepySnapValidationError.warning(expected_message)]
-    test_module._validate_mod_override("fake", prefix="test") == expected
+    assert test_module._validate_mod_override("fake", prefix="test") == expected
 
 
 @patch.object(test_module, "NEURODAMUS_PRESENT", new=True)
@@ -409,7 +408,7 @@ def test__compare_ids(mock_missing_ids):
             ),
             lambda *_: {"fake_population": [0, 1, 2]},
         ],
-        [{"spike_file": "fake_spikes.h5"}, "Unknown IOError", IOError("Unknown", "IOError")],
+        [{"spike_file": "fake_spikes.h5"}, "Unknown IOError", OSError("Unknown", "IOError")],
     ],
 )
 def test__validate_spike_file_contents(
@@ -572,7 +571,7 @@ def test_validate_inputs():
     expected_error_messages = [
         "inputs.fail_0.node_set: Unknown node set: 'fail_node_set'",
         f"inputs.fail_1.spike_file: No such file: {fail_spike_file}",
-        f"inputs.fail_1.spike_file: Can not validate file contents",
+        "inputs.fail_1.spike_file: Can not validate file contents",
     ]
 
     expected = [BluepySnapValidationError.fatal(msg) for msg in expected_error_messages]
@@ -596,7 +595,7 @@ def test_validate_network():
 
     path = "fake_path"
     config = {**base_config, "network": path}
-    expected = [BluepySnapValidationError.fatal(f"network: No such file: {TEST_DATA_DIR/path}")]
+    expected = [BluepySnapValidationError.fatal(f"network: No such file: {TEST_DATA_DIR / path}")]
     assert test_module.validate_network(config) == expected
 
     empty_network = {**base_config, "network": ""}
@@ -792,7 +791,7 @@ def test__validate_electrodes_file():
     path = "./fake_path"
     prefix = "run.electrodes_file"
     expected = [
-        BluepySnapValidationError.fatal(f"{prefix}: No such file: {TEST_DATA_DIR/path}"),
+        BluepySnapValidationError.fatal(f"{prefix}: No such file: {TEST_DATA_DIR / path}"),
         BluepySnapValidationError.fatal(f"{prefix}: Can not validate file contents"),
     ]
     config = {"run": {"electrodes_file": path}, "_config_dir": TEST_DATA_DIR}

@@ -5,6 +5,7 @@ import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
+from utils import TEST_DATA_DIR
 
 import bluepysnap.frame_report as test_module
 from bluepysnap.bbp import Cell
@@ -12,8 +13,6 @@ from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.simulation import Simulation
-
-from utils import TEST_DATA_DIR
 
 
 class TestFrameReport:

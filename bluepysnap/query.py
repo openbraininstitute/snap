@@ -91,6 +91,7 @@ def _positional_mask(data, ids):
     """Positional mask for the node IDs.
 
     Args:
+        data (pd.DataFrame): data
         ids (None/numpy.ndarray): the ids array. If None all ids are selected.
 
     Examples:

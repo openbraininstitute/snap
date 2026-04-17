@@ -2,6 +2,7 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
+from utils import TEST_DATA_DIR
 
 from bluepysnap import BluepySnapError, Circuit
 from bluepysnap.node_sets import NodeSets
@@ -16,8 +17,6 @@ from bluepysnap.query import (
     resolve_ids,
     resolve_nodesets,
 )
-
-from utils import TEST_DATA_DIR
 
 
 def test_positional_mask():

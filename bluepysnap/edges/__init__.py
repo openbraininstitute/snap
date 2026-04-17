@@ -2,3 +2,8 @@
 
 from bluepysnap.edges.edge_population import EdgePopulation
 from bluepysnap.edges.edges import Edges
+
+__all__ = [
+    "EdgePopulation",
+    "Edges",
+]

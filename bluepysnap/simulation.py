@@ -55,6 +55,7 @@ def _warn_on_overwritten_node_sets(overwritten, print_max=10):
         warnings.warn(
             f"Simulation node sets overwrite {n} node set(s) in Circuit node sets: {names}",
             RuntimeWarning,
+            stacklevel=2,
         )
 
 

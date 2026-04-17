@@ -116,8 +116,7 @@ class NodeSets:
             return overwritten
 
         raise BluepySnapError(
-            f"Unexpected type: '{type(node_sets).__name__}' "
-            f"(expected: '{self.__class__.__name__}')"
+            f"Unexpected type: '{type(node_sets).__name__}' (expected: '{self.__class__.__name__}')"
         )
 
     def __contains__(self, name):

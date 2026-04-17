@@ -1,11 +1,10 @@
 import libsonata
 import numpy.testing as npt
 import pytest
+from utils import TEST_DATA_DIR
 
 import bluepysnap.input as test_module
 from bluepysnap.exceptions import BluepySnapError
-
-from utils import TEST_DATA_DIR
 
 
 class TestSynapseReplay:

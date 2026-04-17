@@ -8,6 +8,7 @@ import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
+from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 import bluepysnap.edges.edge_population as test_module
 from bluepysnap.bbp import Synapse
@@ -17,8 +18,6 @@ from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
 from bluepysnap.edges.edge_population_stats import StatsHelper
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, Edge
-
-from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 
 def index_as_ids_dtypes(values):
@@ -747,7 +746,7 @@ class TestEdgePopulation:
             pickle.dump(self.test_obj, fd)
 
         with open(pickle_path, "rb") as fd:
-            edge_population = pickle.load(fd)
+            edge_population = pickle.load(fd)  # noqa: S301
 
         assert pickle_path.stat().st_size < 130 + PICKLED_SIZE_ADJUSTMENT
         assert edge_population.name == "default"

@@ -1,4 +1,4 @@
-# Configuration file for the Sphinx documentation builder.
+"""Configuration file for the Sphinx documentation builder."""
 #
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
@@ -81,7 +81,7 @@ suppress_warnings = [
 
 # generate the link to the notebooks on GitHub
 _base_url = "https://github.com/BlueBrain/snap"
-_git_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+_git_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()  # noqa: S607
 extlinks = {
     "notebooks_source": (
         f"{_base_url}/blob/{_git_commit}/doc/source/notebooks/%s.ipynb",

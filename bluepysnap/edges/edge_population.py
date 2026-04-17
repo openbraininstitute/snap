@@ -167,7 +167,7 @@ class EdgePopulation:
         Examples:
             >>> from bluepysnap.sonata_constants import Edge
             >>> print(my_edge_population.container_property_names(Edge))
-            >>> ["AXONAL_DELAY", "SYN_WEIGHT"] # values you can use with my_edge_population
+            >>> ["AXONAL_DELAY", "SYN_WEIGHT"]  # values you can use with my_edge_population
         """
         if not inspect.isclass(container) or not issubclass(container, ConstContainer):
             raise BluepySnapError("'container' must be a subclass of ConstContainer")
@@ -527,7 +527,6 @@ class EdgePopulation:
 
     def _add_circuit_ids(self, its):
         """Completes the CircuitNodeId."""
-
         return (
             (
                 CircuitNodeId(self.source.name, source_id),
@@ -539,7 +538,6 @@ class EdgePopulation:
 
     def _add_edge_ids(self, its):
         """Completes the CircuitNodeId and adds the CircuitEdgeIds."""
-
         return (
             (
                 CircuitNodeId(self.source.name, source_id),
@@ -551,7 +549,6 @@ class EdgePopulation:
 
     def _omit_edge_count(self, its):
         """Completes the CircuitNodeId and removes the edge count."""
-
         return (
             (
                 CircuitNodeId(self.source.name, source_id),

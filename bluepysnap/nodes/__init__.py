@@ -2,3 +2,8 @@
 
 from bluepysnap.nodes.node_population import NodePopulation
 from bluepysnap.nodes.nodes import Nodes
+
+__all__ = [
+    "NodePopulation",
+    "Nodes",
+]

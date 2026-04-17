@@ -2,10 +2,9 @@ from unittest.mock import Mock, patch
 
 import click
 from click.testing import CliRunner
+from utils import TEST_DATA_DIR
 
 from bluepysnap.cli import cli
-
-from utils import TEST_DATA_DIR
 
 
 @patch("bluepysnap.schemas.validate_nodes_schema", Mock(return_value=[]))

@@ -4,13 +4,12 @@ import pickle
 import pandas as pd
 import pytest
 from libsonata import SonataError
+from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 import bluepysnap.circuit as test_module
 from bluepysnap.edges import EdgePopulation, Edges
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.nodes import NodePopulation, Nodes
-
-from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 
 def test_all():
@@ -92,7 +91,7 @@ def test_pickle(tmp_path):
         pickle.dump(circuit, fd)
 
     with open(pickle_path, "rb") as fd:
-        circuit = pickle.load(fd)
+        circuit = pickle.load(fd)  # noqa: S301
 
     assert pickle_path.stat().st_size < 60 + PICKLED_SIZE_ADJUSTMENT
     assert list(circuit.edges) == ["default", "default2"]

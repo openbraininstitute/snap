@@ -2,12 +2,11 @@ import sys
 from unittest.mock import Mock, patch
 
 import pytest
+from utils import TEST_DATA_DIR
 
 import bluepysnap._plotting as test_module
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.simulation import Simulation
-
-from utils import TEST_DATA_DIR
 
 # NOTE: The tests here are primarily to make sure all the code is covered and deprecation warnings,
 # etc. are raised. They don't ensure nor really test the correctness of the functionality.

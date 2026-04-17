@@ -3,11 +3,10 @@ from unittest.mock import Mock, patch
 import h5py
 import numpy as np
 import pytest
+from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 import bluepysnap.circuit_validation as test_module
 from bluepysnap.exceptions import BluepySnapValidationError
-
-from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 
 @patch("bluepysnap.schemas.validate_nodes_schema")
@@ -543,12 +542,10 @@ def test_invalid_edge_node_ids():
                 "/edges/default/target_node_id misses node ids in its node population: [99999]",
             ),
             BluepySnapValidationError.fatal(
-                f"Population {edges_file} edges [99999] have node ids [0 1] instead of "
-                "single id 2",
+                f"Population {edges_file} edges [99999] have node ids [0 1] instead of single id 2",
             ),
             BluepySnapValidationError.fatal(
-                f"Population {edges_file} edges [99999] have node ids [0 1] instead of "
-                "single id 0",
+                f"Population {edges_file} edges [99999] have node ids [0 1] instead of single id 0",
             ),
         }
 

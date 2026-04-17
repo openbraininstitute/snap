@@ -4,11 +4,10 @@ import re
 import libsonata
 import pytest
 from numpy.testing import assert_array_equal
+from utils import TEST_DATA_DIR
 
 import bluepysnap.node_sets as test_module
 from bluepysnap.exceptions import BluepySnapError
-
-from utils import TEST_DATA_DIR
 
 
 class TestNodeSet:
@@ -84,7 +83,7 @@ class TestNodeSets:
         assert "Layer23" in self.test_obj
         assert "find_me_you_will_not" not in self.test_obj
         with pytest.raises(BluepySnapError, match="Unexpected type"):
-            42 in self.test_obj
+            assert 42 in self.test_obj
 
     def test_getitem(self):
         assert isinstance(self.test_obj["Layer23"], test_module.NodeSet)

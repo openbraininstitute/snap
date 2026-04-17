@@ -78,7 +78,7 @@ class DocSubstitutionMeta(type):
                 changed_fun.__doc__ = _word_swapper(changed_fun.__doc__, source_word, target_word)
                 attrs[fun_name] = changed_fun
         # create the class
-        obj = super(DocSubstitutionMeta, mcs).__new__(mcs, name, parents, attrs)
+        obj = super().__new__(mcs, name, parents, attrs)
         return obj
 
 

@@ -37,7 +37,7 @@ class ConstContainer:
             >>>     VAR2 = "var2"
             >>> class SubSubContainer(SubContainer):
             >>>     VAR3 = "var3"
-            >>> print(SubSubContainer.key_set()) # To know the accessible variable names
+            >>> print(SubSubContainer.key_set())  # To know the accessible variable names
             {"VAR1", "VAR2", "VAR3"}
             >>> for v in SubSubContainer.key_set(): # To get the variable (names, values)
             >>>     print(v, getattr(SubSubContainer, v))

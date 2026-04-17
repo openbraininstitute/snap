@@ -3,11 +3,10 @@ from collections.abc import Iterable
 import h5py
 import numpy as np
 import pytest
+from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 import bluepysnap.schemas.schemas as test_module
 from bluepysnap.exceptions import BluepySnapValidationError
-
-from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 
 @pytest.mark.parametrize(

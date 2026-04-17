@@ -6,3 +6,10 @@ from bluepysnap.schemas.schemas import (
     validate_nodes_schema,
     validate_simulation_schema,
 )
+
+__all__ = [
+    "validate_circuit_schema",
+    "validate_edges_schema",
+    "validate_nodes_schema",
+    "validate_simulation_schema",
+]

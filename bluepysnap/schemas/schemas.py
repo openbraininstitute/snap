@@ -173,6 +173,7 @@ def validate_simulation_schema(path, config, ignore_datatype_errors):
     Args:
         path (str): path to the config (for error messages)
         config (dict): resolved bluepysnap config
+        ignore_datatype_errors (bool): Don't check if datatypes are correct
 
     Returns:
         list: List of errors, empty if no errors
@@ -188,6 +189,7 @@ def validate_circuit_schema(path, config, ignore_datatype_errors):
     Args:
         path (str): path to the config (for error messages)
         config (dict): resolved bluepysnap config
+        ignore_datatype_errors (bool): Don't check if datatypes are correct
 
     Returns:
         list: List of errors, empty if no errors
@@ -203,6 +205,7 @@ def validate_nodes_schema(path, nodes_type, ignore_datatype_errors):
     Args:
         path (str): path to the nodes file
         nodes_type (str): node type (e.g., "biophysical")
+        ignore_datatype_errors (bool): Don't check if datatypes are correct
 
     Returns:
         list: List of errors, empty if no errors
@@ -222,6 +225,7 @@ def validate_edges_schema(path, edges_type, virtual, ignore_datatype_errors):
         path (str): path to the edges file
         edges_type (str): edge type (e.g., "chemical")
         virtual(bool): whether this is a virtual edge population
+        ignore_datatype_errors (bool): Don't check if datatypes are correct
 
     Returns:
         list: List of errors, empty if no errors

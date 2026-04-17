@@ -101,7 +101,7 @@ class CircuitIds(abc.ABC):
             CircuitIds: a set of global node IDs created via the provided dictionary.
 
         Examples:
-            >>> CircuitIds.from_dict({"pop1": [0,2,4], "pop2": [1,2,5]})
+            >>> CircuitIds.from_dict({"pop1": [0, 2, 4], "pop2": [1, 2, 5]})
         """
         populations = np.empty((0,), dtype=str)
         population_ids = np.empty((0,), dtype=utils.IDS_DTYPE)

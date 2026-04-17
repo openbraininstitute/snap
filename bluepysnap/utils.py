@@ -45,7 +45,7 @@ class Deprecate:
     @staticmethod
     def warn(msg=""):
         """Issue a deprecation warning."""
-        warnings.warn(msg, BluepySnapDeprecationWarning)
+        warnings.warn(msg, BluepySnapDeprecationWarning, stacklevel=2)
 
 
 def load_json(filepath):

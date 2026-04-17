@@ -301,13 +301,13 @@ def _check_nodes_group(group_df, group, population, population_name):
     return errors
 
 
-def validate_node_population(nodes_file, population_dict, name):
+def validate_node_population(nodes_file, population_dict, name: str):
     """Validates nodes population.
 
     Args:
         nodes_file (str): path to the nodes file (.h5)
         population_dict (dict): the node population config merged with the components config
-        config (dict): resolved bluepysnap config
+        name: population name
 
     Returns:
         list: List of errors, empty if no errors
@@ -394,7 +394,7 @@ def _check_edges_node_ids(nodes_ds, nodes):
         elif f"nodes/{node_population_name}" in h5f:
             errors.append(
                 BluepySnapValidationError.fatal(
-                    (f"{nodes_ds.name} does not have node ids in its node population")
+                    f"{nodes_ds.name} does not have node ids in its node population"
                 )
             )
 
@@ -528,6 +528,7 @@ def validate_edges_dict(edges_dict, nodes, skip_slow, ignore_datatype_errors):
         edges_dict (dict): edges population, represented by an item of "edges" in ``config``
         nodes (list): "nodes" part of the resolved bluepysnap config
         skip_slow(bool): skip slow tests
+        ignore_datatype_errors(bool): Don't check if datatypes are correct
 
     Returns:
         list: List of errors, empty if no errors
@@ -575,6 +576,7 @@ def validate_nodes_dict(nodes_dict, components, ignore_datatype_errors):
     Args:
         nodes_dict (dict): nodes population, represented by an item of "nodes" in ``config``
         components(dict): "components" part of the ``config``
+        ignore_datatype_errors(bool): Don't check if datatypes are correct
 
     Returns:
         list: List of errors, empty if no errors
@@ -628,6 +630,7 @@ def validate(
         skip_slow (bool): skip slow tests
         only_errors (bool): only return/print fatal errors
         print_errors (bool): print errors
+        ignore_datatype_errors(bool): Don't check if datatypes are correct
 
     Returns:
         set: set of errors, empty if no errors

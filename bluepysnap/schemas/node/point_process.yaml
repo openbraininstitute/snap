@@ -1,0 +1,26 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Nodes - Allen Point Process
+description: schema for Allen Point Process
+allOf: [{ $ref: "#/$node_file_defs/nodes_file_root" }]
+properties:
+  nodes:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              # https://sonata-extension.readthedocs.io/en/latest/sonata_tech.html#fields-for-allen-s-point-neurons-model-type-point-process
+              - x
+              - y
+              - z
+              - orientation_w
+              - orientation_x
+              - orientation_y
+              - orientation_z
+              - morphology
+              - model_template
+              - model_type
+              - etype
+              - mtype
+              - synapse_class

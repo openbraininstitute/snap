@@ -203,6 +203,14 @@ $edge_file_defs:
                   vasculature_segment_id:
                     $ref: "#/$typedefs/uint32"
 
+                  # Exp2Syn_synapse
+                  tau1:
+                    $ref: "#/$typedefs/float32"
+                  tau2:
+                    $ref: "#/$typedefs/float32"
+                  erev:
+                    $ref: "#/$typedefs/float32"
+
                   synapse_id:
                     $ref: "#/$typedefs/uint64"
                     required:

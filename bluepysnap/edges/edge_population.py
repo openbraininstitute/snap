@@ -62,18 +62,18 @@ class EdgePopulation:
         self._circuit = circuit
         self.name = population_name
 
-    @cached_property
-    def _properties(self):
-        """Edge population properties."""
-        return self._circuit.to_libsonata.edge_population_properties(self.name)
-
     @property
-    def _population(self):
-        """Libsonata edge population.
+    def to_libsonata(self):
+        """Libsonata node population.
 
         Not cached because it would keep the hdf5 file open.
         """
         return self._circuit.to_libsonata.edge_population(self.name)
+
+    @cached_property
+    def _properties(self):
+        """Edge population properties."""
+        return self._circuit.to_libsonata.edge_population_properties(self.name)
 
     @staticmethod
     def _resolve_node_ids(nodes, group):
@@ -85,7 +85,7 @@ class EdgePopulation:
     @property
     def size(self):
         """Population size."""
-        return self._population.size
+        return self.to_libsonata.size
 
     def _nodes(self, population_name):
         """Returns the NodePopulation corresponding to population."""
@@ -100,20 +100,20 @@ class EdgePopulation:
     @cached_property
     def source(self):
         """Source NodePopulation."""
-        return self._nodes(self._population.source)
+        return self._nodes(self.to_libsonata.source)
 
     @cached_property
     def target(self):
         """Target NodePopulation."""
-        return self._nodes(self._population.target)
+        return self._nodes(self.to_libsonata.target)
 
     @cached_property
     def _attribute_names(self):
-        return set(self._population.attribute_names)
+        return set(self.to_libsonata.attribute_names)
 
     @cached_property
     def _dynamics_params_names(self):
-        return set(utils.add_dynamic_prefix(self._population.dynamics_attribute_names))
+        return set(utils.add_dynamic_prefix(self.to_libsonata.dynamics_attribute_names))
 
     @property
     def _topology_property_names(self):
@@ -176,13 +176,13 @@ class EdgePopulation:
 
     def _get_property(self, prop, selection):
         if prop == Edge.SOURCE_NODE_ID:
-            result = utils.ensure_ids(self._population.source_nodes(selection))
+            result = utils.ensure_ids(self.to_libsonata.source_nodes(selection))
         elif prop == Edge.TARGET_NODE_ID:
-            result = utils.ensure_ids(self._population.target_nodes(selection))
+            result = utils.ensure_ids(self.to_libsonata.target_nodes(selection))
         elif prop in self._attribute_names:
-            result = self._population.get_attribute(prop, selection)
+            result = self.to_libsonata.get_attribute(prop, selection)
         elif prop in self._dynamics_params_names:
-            result = self._population.get_dynamics_attribute(
+            result = self.to_libsonata.get_dynamics_attribute(
                 prop.split(DYNAMICS_PREFIX)[1], selection
             )
         else:
@@ -269,7 +269,7 @@ class EdgePopulation:
             numpy.array: A numpy array of IDs.
         """
         if group is None:
-            result = self._population.select_all().flatten()
+            result = self.to_libsonata.select_all().flatten()
         elif isinstance(group, CircuitEdgeIds):
             result = group.filter_population(self.name).get_ids()
         elif isinstance(group, np.ndarray):
@@ -349,10 +349,12 @@ class EdgePopulation:
             numpy.ndarray: Afferent node IDs for all the targets.
         """
         if target is not None:
-            selection = self._population.afferent_edges(self._resolve_node_ids(self.target, target))
+            selection = self.to_libsonata.afferent_edges(
+                self._resolve_node_ids(self.target, target)
+            )
         else:
-            selection = self._population.select_all()
-        result = self._population.source_nodes(selection)
+            selection = self.to_libsonata.select_all()
+        result = self.to_libsonata.source_nodes(selection)
         if unique:
             result = np.unique(result)
         return utils.ensure_ids(result)
@@ -372,10 +374,12 @@ class EdgePopulation:
             numpy.ndarray: Efferent node IDs for all the sources.
         """
         if source is not None:
-            selection = self._population.efferent_edges(self._resolve_node_ids(self.source, source))
+            selection = self.to_libsonata.efferent_edges(
+                self._resolve_node_ids(self.source, source)
+            )
         else:
-            selection = self._population.select_all()
-        result = self._population.target_nodes(selection)
+            selection = self.to_libsonata.select_all()
+        result = self.to_libsonata.target_nodes(selection)
         if unique:
             result = np.unique(result)
         return utils.ensure_ids(result)
@@ -400,11 +404,11 @@ class EdgePopulation:
         target_edge_ids = self._resolve_node_ids(self.target, target)
 
         if source_node_ids is None:
-            selection = self._population.afferent_edges(target_edge_ids)
+            selection = self.to_libsonata.afferent_edges(target_edge_ids)
         elif target_edge_ids is None:
-            selection = self._population.efferent_edges(source_node_ids)
+            selection = self.to_libsonata.efferent_edges(source_node_ids)
         else:
-            selection = self._population.connecting_edges(source_node_ids, target_edge_ids)
+            selection = self.to_libsonata.connecting_edges(source_node_ids, target_edge_ids)
 
         if properties:
             return self._get(selection, properties)
@@ -471,10 +475,10 @@ class EdgePopulation:
             else:
                 # Checking the indexing 'direction'. One direction has contiguous indices.
                 range_size_source = _estimate_range_size(
-                    self._population.efferent_edges, source_node_ids
+                    self.to_libsonata.efferent_edges, source_node_ids
                 )
                 range_size_target = _estimate_range_size(
-                    self._population.afferent_edges, target_node_ids
+                    self.to_libsonata.afferent_edges, target_node_ids
                 )
                 return "source" if (range_size_source < range_size_target) else "target"
 

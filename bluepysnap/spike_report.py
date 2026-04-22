@@ -18,11 +18,11 @@
 
 from collections.abc import Mapping
 from contextlib import contextmanager
+from functools import cached_property
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from cached_property import cached_property
 from libsonata import SonataError, SpikeReader
 
 import bluepysnap._plotting

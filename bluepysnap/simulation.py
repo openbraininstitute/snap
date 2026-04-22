@@ -17,9 +17,8 @@
 """Simulation access."""
 
 import warnings
+from functools import cached_property
 from pathlib import Path
-
-from cached_property import cached_property
 
 from bluepysnap.config import SimulationConfig
 from bluepysnap.exceptions import BluepySnapError

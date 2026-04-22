@@ -62,11 +62,11 @@ Examples:
 
 import inspect
 from collections.abc import Mapping, Sequence
+from functools import cached_property
 
 import libsonata
 import numpy as np
 import pandas as pd
-from cached_property import cached_property
 from more_itertools import first
 
 from bluepysnap import query, utils

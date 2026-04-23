@@ -18,9 +18,8 @@
 """Access to circuit data."""
 
 import logging
+from functools import cached_property
 from pathlib import Path
-
-from cached_property import cached_property
 
 from bluepysnap.config import CircuitConfig, CircuitConfigStatus
 from bluepysnap.edges import Edges

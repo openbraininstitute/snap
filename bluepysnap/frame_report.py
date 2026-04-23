@@ -18,10 +18,10 @@
 
 import logging
 from collections.abc import Mapping
+from functools import cached_property
 
 import numpy as np
 import pandas as pd
-from cached_property import cached_property
 from libsonata import ElementReportReader, SonataError
 
 import bluepysnap._plotting

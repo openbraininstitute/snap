@@ -1,3 +1,4 @@
+$schema: https://json-schema.org/draft/2020-12/schema
 title: Node file definitions
 description: schema definitions that apply to all node files
 $node_file_defs:
@@ -17,7 +18,7 @@ $node_file_defs:
               - node_type_id
             properties:
               node_type_id:
-                $ref: "#/$typedefs/int64"
+                $ref: "#/$typedefs/signed_integer"
               "0":
                 type: object
                 properties:
@@ -86,13 +87,13 @@ $node_file_defs:
                   region:
                     $ref: "#/$typedefs/utf8"
                   section_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   segment_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   synapse_class:
                     $ref: "#/$typedefs/utf8"
                   type:
-                    $ref: "#/$typedefs/int32"
+                    $ref: "#/$typedefs/signed_integer"
 
                   "@library":
                     type: object
@@ -119,6 +120,6 @@ $node_file_defs:
                   end_diameter:
                     $ref: "#/$typedefs/float32"
                   start_node:
-                    $ref: "#/$typedefs/uint64"
+                    $ref: "#/$typedefs/unsigned_integer"
                   end_node:
-                    $ref: "#/$typedefs/uint64"
+                    $ref: "#/$typedefs/unsigned_integer"

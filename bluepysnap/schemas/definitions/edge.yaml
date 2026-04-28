@@ -6,12 +6,12 @@ $edge_file_defs:
     type: object
     properties:
       node_id_to_ranges:
-        $ref: "#/$typedefs/uint64"
+        $ref: "#/$typedefs/unsigned_integer"
       range_to_edge_id:
-        $ref: "#/$typedefs/uint64"
+        $ref: "#/$typedefs/unsigned_integer"
 
   edge_node_ids:
-    $ref: "#/$typedefs/uint64"
+    $ref: "#/$typedefs/unsigned_integer"
     required:
       - attributes
     properties:
@@ -54,7 +54,7 @@ $edge_file_defs:
                 $ref: "#/$edge_file_defs/edge_node_ids"
 
               edge_type_id:
-                $ref: "#/$typedefs/int64"
+                $ref: "#/$typedefs/signed_integer"
 
               "0":
                 type: object
@@ -74,18 +74,18 @@ $edge_file_defs:
                     $ref: "#/$typedefs/float32"
 
                   afferent_section_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   afferent_section_type:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   afferent_section_pos:
                     $ref: "#/$typedefs/float32"
                   afferent_section_offset:
                     $ref: "#/$typedefs/float32"
 
                   afferent_segment_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   afferent_segment_type:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   afferent_segment_pos:
                     $ref: "#/$typedefs/float32"
                   afferent_segment_offset:
@@ -106,18 +106,18 @@ $edge_file_defs:
                     $ref: "#/$typedefs/float32"
 
                   efferent_section_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   efferent_section_type:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   efferent_section_pos:
                     $ref: "#/$typedefs/float32"
                   efferent_section_offset:
                     $ref: "#/$typedefs/float32"
 
                   efferent_segment_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   efferent_segment_type:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   efferent_segment_pos:
                     $ref: "#/$typedefs/float32"
                   efferent_segment_offset:
@@ -134,7 +134,7 @@ $edge_file_defs:
                   u_syn:
                     $ref: "#/$typedefs/float32"
                   n_rrp_vesicles:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   spine_length:
                     $ref: "#/$typedefs/float32"
                   spine_morphology:
@@ -148,24 +148,24 @@ $edge_file_defs:
                   u_hill_coefficient:
                     $ref: "#/$typedefs/float32"
                   syn_type_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   delay:
                     $ref: "#/$typedefs/float32"
 
                   # Connection type is electrical_synapse
                   afferent_junction_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   afferent_junction_type:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   efferent_junction_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   efferent_junction_type:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   # Connection type is synapse_astrocyte
                   astrocyte_section_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   astrocyte_segment_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   astrocyte_section_pos:
                     $ref: "#/$typedefs/float32"
                   astrocyte_segment_offset:
@@ -185,7 +185,7 @@ $edge_file_defs:
 
                   # Connection type is endfoot.
                   endfoot_id:
-                    $ref: "#/$typedefs/uint64"
+                    $ref: "#/$typedefs/unsigned_integer"
                   endfoot_surface_x:
                     $ref: "#/$typedefs/float32"
                   endfoot_surface_y:
@@ -199,9 +199,9 @@ $edge_file_defs:
                   endfoot_compartment_perimeter:
                     $ref: "#/$typedefs/float32"
                   vasculature_section_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
                   vasculature_segment_id:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/unsigned_integer"
 
                   # Exp2Syn_synapse
                   tau1:
@@ -212,7 +212,7 @@ $edge_file_defs:
                     $ref: "#/$typedefs/float32"
 
                   synapse_id:
-                    $ref: "#/$typedefs/uint64"
+                    $ref: "#/$typedefs/unsigned_integer"
                     required:
                       - attributes
                     properties:

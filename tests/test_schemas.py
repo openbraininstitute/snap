@@ -457,22 +457,31 @@ def test_wrong_datatype(field):
         edges_file = circuit_copy_path / "edges_single_pop.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f[field]
-            h5f.create_dataset(field, data=[0], dtype="i2")
+            h5f.create_dataset(field, data=[0], dtype="u2")
         errors = test_module.validate_edges_schema(
             str(edges_file), "chemical", virtual=False, ignore_datatype_errors=False
         )
         assert len(errors) == 1
         assert errors[0].level == BluepySnapValidationError.WARNING
-        assert f"incorrect datatype 'int16' for '{field}'" in errors[0].message
+        assert f"incorrect datatype 'uint16' for '{field}'" in errors[0].message
 
 
 def test_nodes_schema_types():
-    property_types, _ = test_module.nodes_schema_types("biophysical")
+    property_types, dynamics_params = test_module.nodes_schema_types("biophysical")
     assert "x" in property_types
     assert property_types["x"] == np.float32
+
+    assert "section_id" in property_types
+    assert property_types["section_id"] == [np.uint8, np.uint16, np.uint32, np.uint64]
+
+    assert "AIS_scaler" in dynamics_params
+    assert dynamics_params["AIS_scaler"] == np.float32
 
 
 def test_edges_schema_types():
     edge_property_types = test_module.edges_schema_types("chemical", virtual=True)
     assert "afferent_center_x" in edge_property_types
     assert edge_property_types["afferent_center_x"] == np.float32
+
+    assert "endfoot_id" in edge_property_types
+    assert edge_property_types["endfoot_id"] == [np.uint8, np.uint16, np.uint32, np.uint64]

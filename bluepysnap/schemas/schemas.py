@@ -248,11 +248,13 @@ def _resolve_types(registry, types):
     def _resolve_type(type_):
         if type_ not in cache:
             resolved = registry.resolver().lookup(type_)
-            type_ = resolved.contents["properties"]["datatype"]["const"]
-            if hasattr(np, type_):
-                cache[type_] = getattr(np, type_)
-            elif type_ == "utf-8":
-                cache[type_] = str
+            if const := resolved.contents["properties"]["datatype"].get("const"):
+                if hasattr(np, const):
+                    cache[type_] = getattr(np, const)
+                elif const == "utf-8":
+                    cache[type_] = str
+            elif enum := resolved.contents["properties"]["datatype"].get("enum"):
+                cache[type_] = [_resolve_type(f"#/$typedefs/{v}") for v in enum]
 
         return cache[type_]
 

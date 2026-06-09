@@ -1,0 +1,16 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Nodes - Brian2 Generic
+description: schema for Brian2 Generic nodes
+allOf: [{ $ref: "#/$node_file_defs/nodes_file_root" }]
+properties:
+  nodes:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              # https://sonata-extension.readthedocs.io/en/latest/sonata_brian2.html
+              - model_template
+              - model_type
+              - synapse_class

@@ -9,5 +9,4 @@ properties:
         properties:
           "0":
             required:
-              - model_template
               - model_type

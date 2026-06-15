@@ -404,6 +404,18 @@ def test_virtual_node_population_ok():
         assert len(errors) == 0
 
 
+def test_virtual_node_population_without_model_template_ok():
+    """model_template is optional for virtual populations and may be absent."""
+    with copy_test_data() as (circuit_copy_path, _):
+        nodes_file = circuit_copy_path / "nodes_single_pop.h5"
+        with h5py.File(nodes_file, "r+") as h5f:
+            del h5f["nodes/default/0/model_template"]
+        errors = test_module.validate_nodes_schema(
+            str(nodes_file), "virtual", ignore_datatype_errors=False
+        )
+        assert len(errors) == 0
+
+
 def test_virtual_node_population_error():
     with copy_test_data() as (circuit_copy_path, _):
         nodes_file = circuit_copy_path / "nodes_single_pop.h5"

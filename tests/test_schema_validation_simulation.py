@@ -25,7 +25,6 @@ MANDATORY_FOR_OPTIONALS = {
     "reports": {
         "fake": {
             "type": "compartment",
-            "variable_name": "fake",
             "dt": 0.1,
             "start_time": 0.1,
             "end_time": 0.1,

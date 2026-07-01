@@ -17,7 +17,6 @@ properties:
               - afferent_section_type
               - afferent_segment_id
               - afferent_segment_offset
-              - efferent_section_type
               - conductance
               - decay_time
               - depression_time

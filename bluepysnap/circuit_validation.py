@@ -521,9 +521,7 @@ def validate_edge_population(edges_file, name, nodes):
     return []
 
 
-def validate_edges_dict(
-    edges_dict, nodes, skip_slow, ignore_datatype_errors, ignore_edge_properties
-):
+def validate_edges_dict(edges_dict, nodes, skip_slow, ignore_datatype_errors):
     """Validate an item in the "edges" list.
 
     Args:
@@ -531,7 +529,6 @@ def validate_edges_dict(
         nodes (list): "nodes" part of the resolved bluepysnap config
         skip_slow(bool): skip slow tests
         ignore_datatype_errors(bool): Don't check if datatypes are correct
-        ignore_edge_properties(Iterable[str]): Edge properties to ignore when validating
 
     Returns:
         list: List of errors, empty if no errors
@@ -573,14 +570,13 @@ def validate_edges_dict(
     return errors
 
 
-def validate_nodes_dict(nodes_dict, components, ignore_datatype_errors, ignore_node_properties):
+def validate_nodes_dict(nodes_dict, components, ignore_datatype_errors):
     """Validate an item in the "nodes" list.
 
     Args:
         nodes_dict (dict): nodes population, represented by an item of "nodes" in ``config``
         components(dict): "components" part of the ``config``
         ignore_datatype_errors(bool): Don't check if datatypes are correct
-        ignore_node_properties(Iterable[str]): Node properties to ignore when validating
 
     Returns:
         list: List of errors, empty if no errors
@@ -602,9 +598,7 @@ def validate_nodes_dict(nodes_dict, components, ignore_datatype_errors, ignore_n
     return errors
 
 
-def validate_networks(
-    config, skip_slow, ignore_datatype_errors, ignore_node_properties, ignore_edge_properties
-):
+def validate_networks(config, skip_slow, ignore_datatype_errors):
     """Validate "networks" part of the config.
 
     Acts as a starting point of validation.
@@ -618,26 +612,16 @@ def validate_networks(
 
     for nodes_dict in nodes:
         if "nodes_file" in nodes_dict:
-            errors += validate_nodes_dict(
-                nodes_dict, components, ignore_datatype_errors, ignore_node_properties
-            )
+            errors += validate_nodes_dict(nodes_dict, components, ignore_datatype_errors)
     for edges_dict in config["networks"].get("edges", []):
         if "edges_file" in edges_dict:
-            errors += validate_edges_dict(
-                edges_dict, nodes, skip_slow, ignore_datatype_errors, ignore_edge_properties
-            )
+            errors += validate_edges_dict(edges_dict, nodes, skip_slow, ignore_datatype_errors)
 
     return errors
 
 
 def validate(
-    config_file,
-    skip_slow,
-    only_errors=False,
-    print_errors=True,
-    ignore_datatype_errors=False,
-    ignore_node_properties=(),
-    ignore_edge_properties=(),
+    config_file, skip_slow, only_errors=False, print_errors=True, ignore_datatype_errors=False
 ):
     """Validates Sonata circuit.
 
@@ -647,8 +631,6 @@ def validate(
         only_errors (bool): only return/print fatal errors
         print_errors (bool): print errors
         ignore_datatype_errors(bool): Don't check if datatypes are correct
-        ignore_node_properties(Iterable[str]): Node properties to ignore when validating
-        ignore_edge_properties(Iterable[str]): Edge properties to ignore when validating
 
     Returns:
         set: set of errors, empty if no errors
@@ -657,13 +639,7 @@ def validate(
     errors = schemas.validate_circuit_schema(config_file, config, ignore_datatype_errors)
 
     if "networks" in config:
-        errors += validate_networks(
-            config,
-            skip_slow,
-            ignore_datatype_errors,
-            ignore_node_properties,
-            ignore_edge_properties,
-        )
+        errors += validate_networks(config, skip_slow, ignore_datatype_errors)
 
     if _check_partial_circuit_config(config):
         message = (
@@ -672,7 +648,6 @@ def validate(
         )
         L.warning(message)
         errors.append(BluepySnapValidationError.warning(message))
-
     if only_errors:
         errors = [e for e in errors if e.level == BluepySnapValidationError.FATAL]
 

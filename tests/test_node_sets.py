@@ -42,7 +42,7 @@ class TestNodeSets:
         assert self.test_obj.content == {
             "double_combined": ["combined", "population_default_L6"],
             "Node2_L6_Y": {"mtype": ["L6_Y"], "node_id": [30, 20, 20]},
-            "Layer23": {"layer": [3, 2, 2]},
+            "Layer23": {"layer": ["layer3", "layer2", "layer2"]},
             "population_default_L6": {"population": "default", "mtype": "L6_Y"},
             "combined": ["Node2_L6_Y", "Layer23"],
             "failing": {"unknown_property": [0]},

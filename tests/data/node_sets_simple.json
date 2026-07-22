@@ -1,6 +1,6 @@
 {
   "Layer23": {
-    "layer": ["layer0", "layer1"]
+    "layer": ["layer2", "layer3"]
   },
   "only_exists_in_simulation": {
     "node_id": [0,2]

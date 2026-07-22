@@ -116,7 +116,7 @@ def _attr_to_ds_name(attr_name):
     '@dynamics:foo' -> 'dynamics_params/foo'
     """
     if attr_name.startswith("@dynamics:"):
-        return "dynamics_params/" + attr_name[len("@dynamics:"):]
+        return "dynamics_params/" + attr_name[len("@dynamics:") :]
     return attr_name
 
 
@@ -198,17 +198,13 @@ def make_default_nodes():
         "morphology": ["morph-A", "morph-B", "morph-C"],
         "mtype": ["L2_X", "L6_Y", "L6_Y"],
         "synapse_class": ["EXC", "INH", "ECX"],
-        "orientation_w": [1.0, 1.0, 1.0],
-        "orientation_x": [0.0, 0.0, 0.0],
-        "orientation_y": [0.0, 0.0, 0.0],
-        "orientation_z": [0.0, 0.0, 0.0],
         "rotation_angle_xaxis": [-0.0, -0.24526736, -0.0],
         "rotation_angle_yaxis": [0.74036866, 0.23011371, 1.0894345],
         "rotation_angle_zaxis": [-0.0, 2.6707377, -0.0],
         "x": [101.0, 201.0, 301.0],
         "y": [102.0, 202.0, 302.0],
         "z": [103.0, 203.0, 303.0],
-        "@dynamics:holding_current": [1.1, 2.2, 3.3],
+        "@dynamics:holding_current": [0.1, 0.2, 0.3],
         "@dynamics:input_resistance": [1.0, 1.1, 1.2],
         "@dynamics:threshold_current": [1.1, 2.2, 3.3],
     }
@@ -227,17 +223,13 @@ def make_default_nodes():
         "synapse_class": ["EXC", "INH", "EXC", "EXC"],
         "other1": ["A", "B", "C", "D"],
         "other2": [10, 11, 12, 13],
-        "orientation_w": [1.0, 1.0, 1.0, 1.0],
-        "orientation_x": [0.0, 0.0, 0.0, 0.0],
-        "orientation_y": [0.0, 0.0, 0.0, 0.0],
-        "orientation_z": [0.0, 0.0, 0.0, 0.0],
         "rotation_angle_xaxis": [0.0, 0.0, 0.0, 0.0],
         "rotation_angle_yaxis": [0.0, 0.0, 0.0, 0.0],
         "rotation_angle_zaxis": [0.0, 0.0, 0.0, 0.0],
         "x": [401.0, 501.0, 601.0, 701.0],
         "y": [402.0, 502.0, 602.0, 702.0],
         "z": [403.0, 503.0, 603.0, 703.0],
-        "@dynamics:holding_current": [1.1, 2.2, 3.3, 4.4],
+        "@dynamics:holding_current": [0.1, 0.2, 0.3, 0.4],
         "@dynamics:threshold_current": [1.1, 2.2, 3.3, 4.4],
     }
 

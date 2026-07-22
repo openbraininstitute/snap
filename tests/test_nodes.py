@@ -56,21 +56,25 @@ class TestNodes:
 
     def test_property_names(self):
         assert self.test_obj.property_names == {
-            "rotation_angle_zaxis",
-            "y",
-            "layer",
-            "mtype",
-            "model_type",
-            "z",
-            "x",
-            "rotation_angle_yaxis",
-            "morphology",
-            "rotation_angle_xaxis",
-            "model_template",
-            "other1",
-            "other2",
             "@dynamics:holding_current",
             "@dynamics:input_resistance",
+            "@dynamics:threshold_current",
+            "etype",
+            "layer",
+            "model_template",
+            "model_type",
+            "morph_class",
+            "morphology",
+            "mtype",
+            "other1",
+            "other2",
+            "rotation_angle_xaxis",
+            "rotation_angle_yaxis",
+            "rotation_angle_zaxis",
+            "synapse_class",
+            "x",
+            "y",
+            "z",
         }
 
     def test_property_value(self):
@@ -153,7 +157,7 @@ class TestNodes:
         assert self.test_obj.ids({"$or": []}) == CircuitNodeIds.from_dict({})
 
         # Mapping --> CircuitNodeIds query on the populations
-        tested = self.test_obj.ids({"layer": 2})
+        tested = self.test_obj.ids({"layer": "layer2"})
         expected = CircuitNodeIds.from_arrays(["default", "default2"], [0, 3])
         assert tested == expected
 
@@ -163,17 +167,17 @@ class TestNodes:
         assert tested == expected
 
         # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
-        tested = self.test_obj.ids({"other1": ["A", "D"], "layer": 2})
+        tested = self.test_obj.ids({"other1": ["A", "D"], "layer": "layer2"})
         expected = CircuitNodeIds.from_arrays(["default2"], [3])
         assert tested == expected
 
         # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
-        tested = self.test_obj.ids({"$or": [{"other1": ["A", "D"]}, {"layer": 2}]})
+        tested = self.test_obj.ids({"$or": [{"other1": ["A", "D"]}, {"layer": "layer2"}]})
         expected = CircuitNodeIds.from_arrays(["default", "default2", "default2"], [0, 0, 3])
         assert tested == expected
 
         # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
-        tested = self.test_obj.ids({"$and": [{"other1": ["A", "D"]}, {"layer": 2}]})
+        tested = self.test_obj.ids({"$and": [{"other1": ["A", "D"]}, {"layer": "layer2"}]})
         expected = CircuitNodeIds.from_arrays(["default2"], [3])
         assert tested == expected
 
@@ -278,7 +282,7 @@ class TestNodes:
 
         # tested accessing data via circuit ids
         tested_ids = self.test_obj.ids({"population": "default"})
-        assert tested.loc[tested_ids, "layer"].tolist() == [2, 6, 6]
+        assert tested.loc[tested_ids, "layer"].tolist() == ["layer2", "layer6", "layer6"]
 
         # tested columns
         tested = self.test_obj.get(properties=["other2", "other1", "layer"])
@@ -287,7 +291,7 @@ class TestNodes:
             {
                 "other2": np.array([np.nan, np.nan, np.nan, 10, 11, 12, 13], dtype=float),
                 "other1": np.array([np.nan, np.nan, np.nan, "A", "B", "C", "D"], dtype=object),
-                "layer": np.array([2, 6, 6, 7, 8, 8, 2], dtype=int),
+                "layer": ["layer2", "layer6", "layer6", "layer7", "layer8", "layer8", "layer2"],
             },
             index=pd.MultiIndex.from_tuples(
                 [
@@ -311,7 +315,7 @@ class TestNodes:
             {
                 "other2": np.array([10, 11, 12, 13], dtype=int),
                 "other1": np.array(["A", "B", "C", "D"], dtype=object),
-                "layer": np.array([7, 8, 8, 2], dtype=int),
+                "layer": ["layer7", "layer8", "layer8", "layer2"],
             },
             index=pd.MultiIndex.from_tuples(
                 [
@@ -331,7 +335,7 @@ class TestNodes:
         )
         expected = pd.DataFrame(
             {
-                "layer": np.array([2, 6, 6], dtype=int),
+                "layer": ["layer2", "layer6", "layer6"],
             },
             index=pd.MultiIndex.from_tuples(
                 [
@@ -348,7 +352,7 @@ class TestNodes:
         tested = self.test_obj.get(properties="layer")
         expected = pd.DataFrame(
             {
-                "layer": np.array([2, 6, 6, 7, 8, 8, 2], dtype=int),
+                "layer": ["layer2", "layer6", "layer6", "layer7", "layer8", "layer8", "layer2"],
             },
             index=pd.MultiIndex.from_tuples(
                 [
@@ -403,7 +407,9 @@ class TestNodes:
             tested = circuit.nodes.get(group={"population_type": "virtual"}, properties=["layer"])
             tested = pd.concat(df for _, df in tested)
             expected = pd.DataFrame(
-                {"layer": np.array([2, 6, 6], dtype=int)},
+                {
+                    "layer": ["layer2", "layer6", "layer6"],
+                },
                 index=pd.MultiIndex.from_tuples(
                     [
                         ("default", 0),
@@ -420,7 +426,7 @@ class TestNodes:
             )
             tested = pd.concat(df for _, df in tested)
             expected = pd.DataFrame(
-                {"layer": np.array([7, 8, 8, 2], dtype=int)},
+                {"layer": ["layer7", "layer8", "layer8", "layer2"]},
                 index=pd.MultiIndex.from_tuples(
                     [
                         ("default2", 0),

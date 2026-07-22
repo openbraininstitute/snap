@@ -44,6 +44,10 @@ class TestNodePopulation:
             "morph_class",
             Cell.MORPHOLOGY,
             Cell.MTYPE,
+            Cell.ORIENTATION_W,
+            Cell.ORIENTATION_X,
+            Cell.ORIENTATION_Y,
+            Cell.ORIENTATION_Z,
             Cell.ROTATION_ANGLE_X,
             Cell.ROTATION_ANGLE_Y,
             Cell.ROTATION_ANGLE_Z,
@@ -87,6 +91,10 @@ class TestNodePopulation:
                 "morph_class": object,
                 "morphology": object,
                 "mtype": object,
+                "orientation_w": np.float32,
+                "orientation_x": np.float32,
+                "orientation_y": np.float32,
+                "orientation_z": np.float32,
                 "rotation_angle_xaxis": np.float32,
                 "rotation_angle_yaxis": np.float32,
                 "rotation_angle_zaxis": np.float32,
@@ -109,6 +117,10 @@ class TestNodePopulation:
             "MODEL_TYPE",
             "MORPHOLOGY",
             "MTYPE",
+            "ORIENTATION_W",
+            "ORIENTATION_X",
+            "ORIENTATION_Y",
+            "ORIENTATION_Z",
             "ROTATION_ANGLE_X",
             "ROTATION_ANGLE_Y",
             "ROTATION_ANGLE_Z",
@@ -125,6 +137,10 @@ class TestNodePopulation:
                 "Y",
                 "Z",
                 "MORPHOLOGY",
+                "ORIENTATION_W",
+                "ORIENTATION_X",
+                "ORIENTATION_Y",
+                "ORIENTATION_Z",
                 "ROTATION_ANGLE_X",
                 "ROTATION_ANGLE_Y",
                 "ROTATION_ANGLE_Z",
@@ -335,7 +351,7 @@ class TestNodePopulation:
 
     def test_get(self):
         _call = self.test_obj.get
-        assert _call().shape == (3, 17)
+        assert _call().shape == (3, 21)
         assert _call(0, Cell.MTYPE) == "L2_X"
         assert _call(CircuitNodeId("default", 0), Cell.MTYPE) == "L2_X"
 
@@ -449,139 +465,142 @@ class TestNodePopulation:
             _call([2, 0]),
         )
 
-    # def test_orientations(self):
-    #    _call = self.test_obj.orientations
-    #    expected = [
-    #        [0.738219, 0.0, 0.674560],
-    #        [0.0, 1.0, 0.0],
-    #        [-0.674560, 0.0, 0.738219],
-    #    ]
-    #    npt.assert_almost_equal(_call(0), expected, decimal=6)
-    #    npt.assert_almost_equal(_call(CircuitNodeId("default", 0)), expected, decimal=6)
-    #    pdt.assert_series_equal(
-    #        _call([2, 0, 1]),
-    #        pd.Series(
-    #            [
-    #                np.array(
-    #                    [
-    #                        [0.462986, 0.0, 0.886365],
-    #                        [0.0, 1.0, 0.0],
-    #                        [-0.886365, 0.0, 0.462986],
-    #                    ]
-    #                ),
-    #                np.array(
-    #                    [
-    #                        [0.738219, 0.0, 0.674560],
-    #                        [0.0, 1.0, 0.0],
-    #                        [-0.674560, 0.0, 0.738219],
-    #                    ]
-    #                ),
-    #                np.array(
-    #                    [
-    #                        [-0.86768965, -0.44169042, 0.22808825],
-    #                        [0.48942842, -0.8393853, 0.23641518],
-    #                        [0.0870316, 0.31676788, 0.94450178],
-    #                    ]
-    #                ),
-    #            ],
-    #            index=pd.Index([2, 0, 1], name="node_ids"),
-    #            name="orientation",
-    #        ),
-    #    )
+    def test_orientations(self):
+        _call = self.test_obj.orientations
+        expected = [
+            [0.738219, 0.0, 0.674560],
+            [0.0, 1.0, 0.0],
+            [-0.674560, 0.0, 0.738219],
+        ]
+        npt.assert_almost_equal(_call(0), expected, decimal=6)
+        npt.assert_almost_equal(_call(CircuitNodeId("default", 0)), expected, decimal=6)
+        pdt.assert_series_equal(
+            _call([2, 0, 1]),
+            pd.Series(
+                [
+                    np.array(
+                        [
+                            [0.462986, 0.0, 0.886365],
+                            [0.0, 1.0, 0.0],
+                            [-0.886365, 0.0, 0.462986],
+                        ],
+                        dtype=np.float32,
+                    ),
+                    np.array(
+                        [
+                            [0.738219, 0.0, 0.674560],
+                            [0.0, 1.0, 0.0],
+                            [-0.674560, 0.0, 0.738219],
+                        ],
+                        dtype=np.float32,
+                    ),
+                    np.array(
+                        [
+                            [-0.86768965, -0.44169042, 0.22808825],
+                            [0.48942842, -0.8393853, 0.23641518],
+                            [0.0870316, 0.31676788, 0.94450178],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ],
+                index=pd.Index([2, 0, 1], name="node_ids"),
+                name="orientation",
+            ),
+        )
 
-    #    # NodeCircuitIds
-    #    pdt.assert_series_equal(
-    #        _call(
-    #            CircuitNodeIds.from_arrays(
-    #                ["default", "default", "default"], [2, 0, 1], sort_index=False
-    #            )
-    #        ),
-    #        _call([2, 0, 1]),
-    #    )
+        # NodeCircuitIds
+        pdt.assert_series_equal(
+            _call(
+                CircuitNodeIds.from_arrays(
+                    ["default", "default", "default"], [2, 0, 1], sort_index=False
+                )
+            ),
+            _call([2, 0, 1]),
+        )
 
-    #    # NodePopulation without rotation_angle[x|z]
-    #    _call_no_xz = create_node_population(
-    #        str(TEST_DATA_DIR / "nodes_no_xz_rotation.h5"), "default"
-    #    ).orientations
-    #    # 0 and 2 node_ids have x|z rotation angles equal to zero
-    #    npt.assert_almost_equal(_call_no_xz(0), _call(0))
-    #    npt.assert_almost_equal(_call_no_xz(2), _call(2))
-    #    npt.assert_almost_equal(
-    #        _call_no_xz(1),
-    #        [[0.97364046, -0.0, 0.22808825], [0.0, 1.0, -0.0], [-0.22808825, 0.0, 0.97364046]],
-    #        decimal=6,
-    #    )
+        # NodePopulation without rotation_angle[x|z]
+        _call_no_xz = create_node_population(
+            str(TEST_DATA_DIR / "nodes_no_xz_rotation.h5"), "default"
+        ).orientations
+        # 0 and 2 node_ids have x|z rotation angles equal to zero
+        npt.assert_almost_equal(_call_no_xz(0), _call(0))
+        npt.assert_almost_equal(_call_no_xz(2), _call(2))
+        npt.assert_almost_equal(
+            _call_no_xz(1),
+            [[0.97364046, -0.0, 0.22808825], [0.0, 1.0, -0.0], [-0.22808825, 0.0, 0.97364046]],
+            decimal=6,
+        )
 
-    #    # NodePopulation without rotation_angle
-    #    _call_no_rot = create_node_population(
-    #        str(TEST_DATA_DIR / "nodes_no_rotation.h5"), "default"
-    #    ).orientations
+        # NodePopulation without rotation_angle
+        _call_no_rot = create_node_population(
+            str(TEST_DATA_DIR / "nodes_no_rotation.h5"), "default"
+        ).orientations
 
-    #    pdt.assert_series_equal(
-    #        _call_no_rot([2, 0, 1]),
-    #        pd.Series(
-    #            [np.eye(3), np.eye(3), np.eye(3)],
-    #            index=pd.Index([2, 0, 1], name="node_ids"),
-    #            name="orientation",
-    #        ),
-    #    )
+        pdt.assert_series_equal(
+            _call_no_rot([2, 0, 1]),
+            pd.Series(
+                [np.eye(3), np.eye(3), np.eye(3)],
+                index=pd.Index([2, 0, 1], name="node_ids"),
+                name="orientation",
+            ),
+        )
 
-    #    # NodePopulation with quaternions
-    #    _call_quat = create_node_population(
-    #        str(TEST_DATA_DIR / "nodes_quaternions.h5"), "default"
-    #    ).orientations
+        # NodePopulation with quaternions
+        _call_quat = create_node_population(
+            str(TEST_DATA_DIR / "nodes_quaternions.h5"), "default"
+        ).orientations
 
-    #    npt.assert_almost_equal(
-    #        _call_quat(0),
-    #        [
-    #            [1, 0.0, 0.0],
-    #            [0.0, 0, -1.0],
-    #            [0.0, 1.0, 0],
-    #        ],
-    #        decimal=6,
-    #    )
+        npt.assert_almost_equal(
+            _call_quat(0),
+            [
+                [1, 0.0, 0.0],
+                [0.0, 0, -1.0],
+                [0.0, 1.0, 0],
+            ],
+            decimal=6,
+        )
 
-    #    series = _call_quat([2, 0, 1])
-    #    for i in range(len(series)):
-    #        series.iloc[i] = np.around(series.iloc[i], decimals=1).astype(np.float64)
+        series = _call_quat([2, 0, 1])
+        for i in range(len(series)):
+            series.iloc[i] = np.around(series.iloc[i], decimals=1).astype(np.float64)
 
-    #    pdt.assert_series_equal(
-    #        series,
-    #        pd.Series(
-    #            [
-    #                np.array(
-    #                    [
-    #                        [0.0, -1.0, 0.0],
-    #                        [1.0, 0.0, 0.0],
-    #                        [0.0, 0.0, 1.0],
-    #                    ]
-    #                ),
-    #                np.array(
-    #                    [
-    #                        [1.0, 0.0, 0.0],
-    #                        [0.0, 0.0, -1.0],
-    #                        [0.0, 1.0, 0.0],
-    #                    ]
-    #                ),
-    #                np.array(
-    #                    [
-    #                        [0.0, 0.0, 1.0],
-    #                        [0.0, 1.0, 0.0],
-    #                        [-1.0, 0.0, 0.0],
-    #                    ]
-    #                ),
-    #            ],
-    #            index=pd.Index([2, 0, 1], name="node_ids"),
-    #            name="orientation",
-    #        ),
-    #    )
+        pdt.assert_series_equal(
+            series,
+            pd.Series(
+                [
+                    np.array(
+                        [
+                            [0.0, -1.0, 0.0],
+                            [1.0, 0.0, 0.0],
+                            [0.0, 0.0, 1.0],
+                        ]
+                    ),
+                    np.array(
+                        [
+                            [1.0, 0.0, 0.0],
+                            [0.0, 0.0, -1.0],
+                            [0.0, 1.0, 0.0],
+                        ]
+                    ),
+                    np.array(
+                        [
+                            [0.0, 0.0, 1.0],
+                            [0.0, 1.0, 0.0],
+                            [-1.0, 0.0, 0.0],
+                        ]
+                    ),
+                ],
+                index=pd.Index([2, 0, 1], name="node_ids"),
+                name="orientation",
+            ),
+        )
 
-    #    _call_missing_quat = create_node_population(
-    #        str(TEST_DATA_DIR / "nodes_quaternions_w_missing.h5"), "default"
-    #    ).orientations
+        _call_missing_quat = create_node_population(
+            str(TEST_DATA_DIR / "nodes_quaternions_w_missing.h5"), "default"
+        ).orientations
 
-    #    with pytest.raises(BluepySnapError):
-    #        _call_missing_quat(0)
+        with pytest.raises(BluepySnapError):
+            _call_missing_quat(0)
 
     def test_count(self):
         _call = self.test_obj.count
@@ -635,6 +654,10 @@ class TestNodePopulation:
             "morphology",
             "morph_class",
             "mtype",
+            "orientation_w",
+            "orientation_x",
+            "orientation_y",
+            "orientation_z",
             "rotation_angle_xaxis",
             "rotation_angle_yaxis",
             "rotation_angle_zaxis",

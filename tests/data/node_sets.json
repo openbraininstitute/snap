@@ -1,9 +1,9 @@
 {
   "Layer2": {
-    "layer": 2
+    "layer": "layer0" 
   },
   "Layer23": {
-    "layer": [2,3]
+    "layer": ["layer0", "layer1"]
   },
   "Empty_nodes": {
     "node_id": []

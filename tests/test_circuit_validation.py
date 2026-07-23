@@ -12,7 +12,7 @@ from bluepysnap.exceptions import BluepySnapValidationError
 @patch("bluepysnap.schemas.validate_nodes_schema")
 @patch("bluepysnap.schemas.validate_edges_schema")
 @patch("bluepysnap.schemas.validate_circuit_schema")
-def validate(s, *mocks, print_errors=False):
+def validate_without_schema(s, *mocks, print_errors=False):
     # reset the mock return value to empty list
     for m in mocks:
         m.return_value = []
@@ -25,13 +25,13 @@ def test_error_comparison():
 
 
 def test_ok_circuit():
-    errors = validate(str(TEST_DATA_DIR / "circuit_config.json"))
+    errors = validate_without_schema(str(TEST_DATA_DIR / "circuit_config.json"))
     assert errors == set()
 
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["node_types_file"] = None
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -68,7 +68,7 @@ def test_print_errors(capsys):
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             del config["networks"]["nodes"]
-        validate(str(config_copy_path), print_errors=True)
+        validate_without_schema(str(config_copy_path), print_errors=True)
     assert "No node population for" in capsys.readouterr().out
 
 
@@ -90,7 +90,7 @@ def test_missing_data_config_no_error(to_remove):
             for key in to_remove[:-1]:
                 c = c[key]
             del c[to_remove[-1]]
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -109,7 +109,7 @@ def test_missing_data_config_no_population_for_edge(to_remove):
             for key in to_remove[:-1]:
                 c = c[key]
             del c[to_remove[-1]]
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.fatal(
                 'No node population for "/edges/default/source_node_id"',
@@ -131,7 +131,7 @@ def test_nodes_population_not_found_in_h5():
         nodes_file = circuit_copy_path / "nodes.h5"
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["populations"]["fake_population"] = {}
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.fatal(
                 f"population 'fake_population' not found in {nodes_file}",
@@ -144,7 +144,7 @@ def test_edges_population_not_found_in_h5():
         edges_file = circuit_copy_path / "edges.h5"
         with edit_config(config_copy_path) as config:
             config["networks"]["edges"][0]["populations"]["fake_population"] = {}
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.fatal(
                 f"population 'fake_population' not found in {edges_file}",
@@ -156,7 +156,7 @@ def test_ok_node_population_type():
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["populations"]["default"]["type"] = "biophysical"
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -168,7 +168,7 @@ def test_ok_nonbio_type(model_type):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default/0/model_type"][:] = model_type
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -177,7 +177,7 @@ def test_population_type_mismatch():
         fake_type = "fake_type"
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["populations"]["default"]["type"] = fake_type
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.warning(
                 (
@@ -192,7 +192,7 @@ def test_ok_edge_population_type():
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["edges"][0]["populations"]["default"]["type"] = "chemical"
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -201,7 +201,7 @@ def test_invalid_edge_population_type():
         fake_type = "fake_type"
         with edit_config(config_copy_path) as config:
             config["networks"]["edges"][0]["populations"]["default"]["type"] = fake_type
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -209,7 +209,7 @@ def test_invalid_config_nodes_file():
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["nodes_file"] = "/"
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {BluepySnapValidationError.fatal('Invalid "nodes_file": /')}
 
 
@@ -217,7 +217,7 @@ def test_invalid_config_edges_file():
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["edges"][0]["edges_file"] = "/"
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {BluepySnapValidationError.fatal('Invalid "edges_file": /')}
 
 
@@ -244,7 +244,7 @@ def test_missing_data_nodes_h5_no_error(to_remove):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             del h5f[to_remove]
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -253,7 +253,7 @@ def test_ok_node_ids_dataset():
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default/node_id"] = list(range(len(h5f["nodes/default/node_type_id"])))
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -273,7 +273,7 @@ def test_ok_bio_model_type_in_library():
                     dtype=h5py.string_dtype(),
                 ),
             )
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -283,7 +283,7 @@ def test_no_bio_component_dirs():
         with edit_config(config_copy_path) as config:
             for dir_ in dirs:
                 del config["components"][dir_]
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.fatal(
                 "'biophysical_neuron_models_dir' not defined for population 'default'",
@@ -314,7 +314,7 @@ def test_container_bio_alternate_morphology_dir():
             config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
                 component: fake_path
             }
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {BluepySnapValidationError.fatal("Missing `morph-C` from container")}
 
 
@@ -327,7 +327,7 @@ def test_container_bio_alternate_morphology_dir_missing_many():
             config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
                 component: fake_path
             }
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         msg = f"Missing at least 1 morphologies in the container: `{fake_path}`"
         assert errors == {BluepySnapValidationError.fatal(msg)}
 
@@ -340,7 +340,7 @@ def test_container_non_h5():
             config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
                 component: fake_path
             }
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         msg = f"Morphology path `{fake_path}` is a file, but that is only suported for h5v1"
         assert errors == {BluepySnapValidationError.fatal(msg)}
 
@@ -353,7 +353,7 @@ def test_invalid_bio_alternate_morphology_dir():
             config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
                 component: fake_path
             }
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.fatal(f'Invalid components "{component}": {fake_path}')
         }
@@ -365,7 +365,7 @@ def test_no_morph_files():
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default/0/morphology"][0] = "noname"
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.warning(
                 f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
@@ -380,7 +380,7 @@ def test_no_alternate_morph_files():
             config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
                 "neurolucida-asc": config["components"]["morphologies_dir"]
             }
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.warning(
                 f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tmorph-A.asc\n",
@@ -400,7 +400,7 @@ def test_no_morph_library_files():
             shape = grp["morphology"].shape
             del grp["morphology"]
             grp.create_dataset("morphology", shape=shape, fillvalue=0, dtype=int)
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.warning(
                 f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
@@ -413,7 +413,7 @@ def test_no_template_files():
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default/0/model_template"][0] = "hoc:noname"
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.warning(
                 f"missing at least 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
@@ -433,7 +433,7 @@ def test_no_template_library_files():
             shape = grp["model_template"].shape
             del grp["model_template"]
             grp.create_dataset("model_template", shape=shape, fillvalue=0, dtype=int)
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.warning(
                 f"missing at least 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
@@ -477,7 +477,7 @@ def test_missing_data_edges_h5_no_error(to_remove):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f[to_remove]
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -486,7 +486,7 @@ def test_no_edge_indices():
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/indices"]
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.warning(f'No "indices" in {edges_file}'),
         }
@@ -498,7 +498,7 @@ def test_no_edge_source_to_target():
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/indices/source_to_target"]
             del h5f["edges/default/indices/target_to_source"]
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.warning(f'No "source_to_target" in {edges_file}'),
             BluepySnapValidationError.warning(f'No "target_to_source" in {edges_file}'),
@@ -510,7 +510,7 @@ def test_no_edge_all_node_ids():
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             del h5f["nodes/default/0"]
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.fatal(
                 "/edges/default/source_node_id does not have node ids in its node population",
@@ -533,7 +533,7 @@ def test_invalid_edge_node_ids():
         with h5py.File(edges_file, "r+") as h5f:
             h5f["edges/default/source_node_id"][0] = 99999
             h5f["edges/default/target_node_id"][0] = 99999
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.fatal(
                 "/edges/default/source_node_id misses node ids in its node population: [99999]",
@@ -555,7 +555,7 @@ def test_explicit_edges_no_node_population_attr():
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/source_node_id"].attrs["node_population"]
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == set()
 
 
@@ -563,7 +563,7 @@ def test_no_duplicate_population_names():
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"].append(config["networks"]["nodes"][0])
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.fatal(
                 'Already have population "default" in config for type "nodes"',
@@ -578,7 +578,7 @@ def test_partial_config_warning():
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["metadata"] = {"status": "partial"}
-        errors = validate(str(config_copy_path))
+        errors = validate_without_schema(str(config_copy_path))
         assert errors == {
             BluepySnapValidationError.warning(
                 (

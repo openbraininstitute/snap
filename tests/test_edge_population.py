@@ -42,32 +42,41 @@ class TestEdgePopulation:
         assert self.test_obj.target.name == "default"
         assert self.test_obj.size, 4
         assert isinstance(self.test_obj.stats, StatsHelper)
-        assert sorted(self.test_obj.property_names) == sorted(
-            [
-                Synapse.SOURCE_NODE_ID,
-                Synapse.TARGET_NODE_ID,
-                Synapse.AXONAL_DELAY,
-                Synapse.G_SYNX,
-                Synapse.POST_X_CENTER,
-                Synapse.POST_Y_CENTER,
-                Synapse.POST_Z_CENTER,
-                Synapse.POST_X_SURFACE,
-                Synapse.POST_Y_SURFACE,
-                Synapse.POST_Z_SURFACE,
-                Synapse.PRE_X_CENTER,
-                Synapse.PRE_Y_CENTER,
-                Synapse.PRE_Z_CENTER,
-                Synapse.PRE_X_SURFACE,
-                Synapse.PRE_Y_SURFACE,
-                Synapse.PRE_Z_SURFACE,
-                Synapse.POST_SECTION_ID,
-                Synapse.POST_SECTION_POS,
-                Synapse.PRE_SECTION_ID,
-                Synapse.PRE_SECTION_POS,
-                Synapse.SYN_WEIGHT,
-                test_module.DYNAMICS_PREFIX + "param1",
-            ]
-        )
+        assert set(self.test_obj.property_names) == {
+            Synapse.SOURCE_NODE_ID,
+            Synapse.TARGET_NODE_ID,
+            Synapse.AXONAL_DELAY,
+            Synapse.G_SYNX,
+            Synapse.POST_X_CENTER,
+            Synapse.POST_Y_CENTER,
+            Synapse.POST_Z_CENTER,
+            Synapse.POST_X_SURFACE,
+            Synapse.POST_Y_SURFACE,
+            Synapse.POST_Z_SURFACE,
+            Synapse.PRE_X_CENTER,
+            Synapse.PRE_Y_CENTER,
+            Synapse.PRE_Z_CENTER,
+            Synapse.PRE_X_SURFACE,
+            Synapse.PRE_Y_SURFACE,
+            Synapse.PRE_Z_SURFACE,
+            Synapse.POST_SECTION_ID,
+            Synapse.POST_SECTION_POS,
+            Synapse.PRE_SECTION_ID,
+            Synapse.PRE_SECTION_POS,
+            Synapse.SYN_WEIGHT,
+            test_module.DYNAMICS_PREFIX + "param1",
+            "afferent_section_type",
+            "afferent_segment_id",
+            "afferent_segment_offset",
+            "decay_time",
+            "depression_time",
+            "facilitation_time",
+            "n_rrp_vesicles",
+            "spine_length",
+            "syn_type_id",
+            "syn_weight",
+            "u_syn",
+        }
         assert self.test_obj.type == DEFAULT_EDGE_TYPE
 
     def test_population_type(self):
@@ -124,59 +133,42 @@ class TestEdgePopulation:
             self.test_obj._nodes("no-such-population")
 
     def test_property_dtypes(self):
-        from numpy import dtype
-
         expected = pd.Series(
-            data=[
-                dtype("float32"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float32"),
-                dtype("float64"),
-                dtype("float32"),
-                dtype("float64"),
-                dtype("int64"),
-                dtype("int64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float32"),
-                dtype("float32"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("int64"),
-                dtype("int64"),
-            ],
-            index=[
-                "syn_weight",
-                "@dynamics:param1",
-                "afferent_surface_y",
-                "afferent_surface_z",
-                "conductance",
-                "efferent_center_x",
-                "delay",
-                "afferent_center_z",
-                "efferent_section_id",
-                "afferent_section_id",
-                "efferent_center_y",
-                "afferent_center_x",
-                "efferent_surface_z",
-                "afferent_center_y",
-                "afferent_surface_x",
-                "efferent_surface_x",
-                "afferent_section_pos",
-                "efferent_section_pos",
-                "efferent_surface_y",
-                "efferent_center_z",
-                "@source_node",
-                "@target_node",
-            ],
-        ).sort_index()
-
+            {
+                "@dynamics:param1": np.float64,
+                "@source_node": np.int64,
+                "@target_node": np.int64,
+                "afferent_center_x": np.float32,
+                "afferent_center_y": np.float32,
+                "afferent_center_z": np.float32,
+                "afferent_section_id": np.uint64,
+                "afferent_section_pos": np.float32,
+                "afferent_section_type": np.uint8,
+                "afferent_segment_id": np.uint8,
+                "afferent_segment_offset": np.float32,
+                "afferent_surface_x": np.float32,
+                "afferent_surface_y": np.float32,
+                "afferent_surface_z": np.float32,
+                "conductance": np.float32,
+                "decay_time": np.float32,
+                "delay": np.float32,
+                "depression_time": np.float32,
+                "efferent_center_x": np.float32,
+                "efferent_center_y": np.float32,
+                "efferent_center_z": np.float32,
+                "efferent_section_id": np.uint64,
+                "efferent_section_pos": np.float32,
+                "efferent_surface_x": np.float32,
+                "efferent_surface_y": np.float32,
+                "efferent_surface_z": np.float32,
+                "facilitation_time": np.float32,
+                "n_rrp_vesicles": np.uint8,
+                "spine_length": np.float32,
+                "syn_type_id": np.uint8,
+                "syn_weight": np.float32,
+                "u_syn": np.float32,
+            }
+        ).apply(np.dtype)
         pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
 
     def test_ids(self):
@@ -286,7 +278,9 @@ class TestEdgePopulation:
     def test_positions_1(self):
         actual = self.test_obj.positions([0], "afferent", "center")
         expected = pd.DataFrame(
-            [[1110.0, 1120.0, 1130.0]], index=index_as_ids_dtypes([0]), columns=["x", "y", "z"]
+            np.array([[1110.0, 1120.0, 1130.0]], dtype=np.float32),
+            index=index_as_ids_dtypes([0]),
+            columns=["x", "y", "z"],
         )
         pdt.assert_frame_equal(actual, expected)
         pdt.assert_frame_equal(self.test_obj.positions(0, "afferent", "center"), actual)
@@ -298,21 +292,27 @@ class TestEdgePopulation:
     def test_positions_2(self):
         actual = self.test_obj.positions([1], "afferent", "surface")
         expected = pd.DataFrame(
-            [[1211.0, 1221.0, 1231.0]], index=index_as_ids_dtypes([1]), columns=["x", "y", "z"]
+            np.array([[1211.0, 1221.0, 1231.0]], dtype=np.float32),
+            index=index_as_ids_dtypes([1]),
+            columns=["x", "y", "z"],
         )
         pdt.assert_frame_equal(actual, expected)
 
     def test_positions_3(self):
         actual = self.test_obj.positions([2], "efferent", "center")
         expected = pd.DataFrame(
-            [[2112.0, 2122.0, 2132.0]], index=index_as_ids_dtypes([2]), columns=["x", "y", "z"]
+            np.array([[2112.0, 2122.0, 2132.0]], dtype=np.float32),
+            index=index_as_ids_dtypes([2]),
+            columns=["x", "y", "z"],
         )
         pdt.assert_frame_equal(actual, expected)
 
     def test_positions_4(self):
         actual = self.test_obj.positions([3], "efferent", "surface")
         expected = pd.DataFrame(
-            [[2213.0, 2223.0, 2233.0]], index=index_as_ids_dtypes([3]), columns=["x", "y", "z"]
+            np.array([[2213.0, 2223.0, 2233.0]], dtype=np.float32),
+            index=index_as_ids_dtypes([3]),
+            columns=["x", "y", "z"],
         )
         pdt.assert_frame_equal(actual, expected)
 

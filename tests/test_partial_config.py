@@ -49,7 +49,7 @@ def test_partial_circuit_config_minimal():
     assert circuit.nodes["default"].property_names is not None
     assert circuit.nodes["default"].container_property_names(Node) is not None
     assert circuit.nodes["default"].container_property_names(Edge) == []
-    assert circuit.nodes["default"].property_values("layer") == {2, 6}
+    assert circuit.nodes["default"].property_values("layer") == {"layer2", "layer6"}
     assert circuit.nodes["default"].property_dtypes is not None
     assert list(circuit.nodes["default"].ids()) == [0, 1, 2]
     assert circuit.nodes["default"].get() is not None

@@ -1,5 +1,5 @@
 {
   "ExtraLayer2": {
-    "layer": 2
+    "layer": "layer2" 
   }
 }

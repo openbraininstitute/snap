@@ -5,7 +5,7 @@
     "node_id": [30, 20, 20]
   },
   "Layer23": {
-    "layer": [3, 2, 2]
+    "layer": ["layer3", "layer2", "layer2"]
   },
   "population_default_L6": {
     "population": "default",

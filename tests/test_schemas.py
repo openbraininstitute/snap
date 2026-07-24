@@ -320,9 +320,6 @@ def test_validate_edges_chemical_missing_required(missing):
                 ignore_datatype_errors=False,
                 ignore_edge_properties=[prop],
             )
-            if errors:
-                breakpoint()  # XXX BREAKPOINT
-
             assert len(errors) == 0
 
 

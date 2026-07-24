@@ -587,3 +587,26 @@ def test_partial_config_warning():
                 ),
             ),
         }
+
+
+def test_validate():
+    res = test_module.validate(
+        str(TEST_DATA_DIR / "circuit_config.json"), skip_slow=False, print_errors=False
+    )
+    assert res == set()
+
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / "edges.h5"
+        with h5py.File(edges_file, "r+") as h5f:
+            del h5f["/edges/default/0/afferent_center_x"]
+
+        res = test_module.validate(config_copy_path, skip_slow=True, print_errors=False)
+        assert len(res) == 1
+
+        res = test_module.validate(
+            config_copy_path,
+            skip_slow=True,
+            print_errors=False,
+            ignore_edge_properties=["afferent_center_x"],
+        )
+        assert len(res) == 0

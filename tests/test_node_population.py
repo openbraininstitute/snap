@@ -9,7 +9,6 @@ import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from numpy import dtype
 from utils import (
     PICKLED_SIZE_ADJUSTMENT,
     TEST_DATA_DIR,
@@ -34,21 +33,29 @@ class TestNodePopulation:
         assert self.test_obj.name == "default"
         assert self.test_obj.size == 3
         assert self.test_obj.type == DEFAULT_NODE_TYPE
-        assert sorted(self.test_obj.property_names) == [
+        assert self.test_obj.property_names == {
             Cell.HOLDING_CURRENT,
             Cell.INPUT_RESISTANCE,
+            Cell.THRESHOLD_CURRENT,
+            Cell.ETYPE,
             Cell.LAYER,
             Cell.MODEL_TEMPLATE,
             Cell.MODEL_TYPE,
+            "morph_class",
             Cell.MORPHOLOGY,
             Cell.MTYPE,
+            Cell.ORIENTATION_W,
+            Cell.ORIENTATION_X,
+            Cell.ORIENTATION_Y,
+            Cell.ORIENTATION_Z,
             Cell.ROTATION_ANGLE_X,
             Cell.ROTATION_ANGLE_Y,
             Cell.ROTATION_ANGLE_Z,
             Cell.X,
             Cell.Y,
             Cell.Z,
-        ]
+            Cell.SYNAPSE_CLASS,
+        }
         assert sorted(self.test_obj._node_sets) == sorted(
             json.loads((TEST_DATA_DIR / "node_sets.json").read_text())
         )
@@ -63,7 +70,7 @@ class TestNodePopulation:
         assert test_obj.type == "fake_type"
 
     def test_property_values(self):
-        assert self.test_obj.property_values(Cell.LAYER) == {2, 6}
+        assert self.test_obj.property_values(Cell.LAYER) == {"layer2", "layer6"}
         assert self.test_obj.property_values(Cell.MORPHOLOGY) == {"morph-A", "morph-B", "morph-C"}
         test_obj_library = create_node_population(
             str(TEST_DATA_DIR / "nodes_with_library_small.h5"), "default"
@@ -73,65 +80,67 @@ class TestNodePopulation:
 
     def test_property_dtypes(self):
         expected = pd.Series(
-            data=[
-                dtype("int64"),
-                dtype("O"),
-                dtype("O"),
-                dtype("O"),
-                dtype("O"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float32"),
-            ],
-            index=[
-                "layer",
-                "model_template",
-                "model_type",
-                "morphology",
-                "mtype",
-                "rotation_angle_xaxis",
-                "rotation_angle_yaxis",
-                "rotation_angle_zaxis",
-                "x",
-                "y",
-                "z",
-                "@dynamics:holding_current",
-                "@dynamics:input_resistance",
-            ],
-        ).sort_index()
+            {
+                "@dynamics:holding_current": np.float32,
+                "@dynamics:input_resistance": np.float32,
+                "@dynamics:threshold_current": np.float32,
+                "etype": object,
+                "layer": object,
+                "model_template": object,
+                "model_type": object,
+                "morph_class": object,
+                "morphology": object,
+                "mtype": object,
+                "orientation_w": np.float32,
+                "orientation_x": np.float32,
+                "orientation_y": np.float32,
+                "orientation_z": np.float32,
+                "rotation_angle_xaxis": np.float32,
+                "rotation_angle_yaxis": np.float32,
+                "rotation_angle_zaxis": np.float32,
+                "synapse_class": object,
+                "x": np.float32,
+                "y": np.float32,
+                "z": np.float32,
+            }
+        ).apply(np.dtype)
 
         pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
 
     def test_container_properties(self):
+        expected = {
+            "ETYPE",
+            "HOLDING_CURRENT",
+            "INPUT_RESISTANCE",
+            "LAYER",
+            "MODEL_TEMPLATE",
+            "MODEL_TYPE",
+            "MORPHOLOGY",
+            "MTYPE",
+            "ORIENTATION_W",
+            "ORIENTATION_X",
+            "ORIENTATION_Y",
+            "ORIENTATION_Z",
+            "ROTATION_ANGLE_X",
+            "ROTATION_ANGLE_Y",
+            "ROTATION_ANGLE_Z",
+            "SYNAPSE_CLASS",
+            "THRESHOLD_CURRENT",
+            "X",
+            "Y",
+            "Z",
+        }
+        assert set(self.test_obj.container_property_names(Cell)) == expected
         expected = sorted(
             [
                 "X",
                 "Y",
                 "Z",
                 "MORPHOLOGY",
-                "HOLDING_CURRENT",
-                "INPUT_RESISTANCE",
-                "ROTATION_ANGLE_X",
-                "ROTATION_ANGLE_Y",
-                "ROTATION_ANGLE_Z",
-                "MTYPE",
-                "LAYER",
-                "MODEL_TEMPLATE",
-                "MODEL_TYPE",
-            ]
-        )
-        assert sorted(self.test_obj.container_property_names(Cell)) == expected
-        expected = sorted(
-            [
-                "X",
-                "Y",
-                "Z",
-                "MORPHOLOGY",
+                "ORIENTATION_W",
+                "ORIENTATION_X",
+                "ORIENTATION_Y",
+                "ORIENTATION_Z",
                 "ROTATION_ANGLE_X",
                 "ROTATION_ANGLE_Y",
                 "ROTATION_ANGLE_Z",
@@ -342,7 +351,7 @@ class TestNodePopulation:
 
     def test_get(self):
         _call = self.test_obj.get
-        assert _call().shape == (3, 13)
+        assert _call().shape == (3, 21)
         assert _call(0, Cell.MTYPE) == "L2_X"
         assert _call(CircuitNodeId("default", 0), Cell.MTYPE) == "L2_X"
 
@@ -353,16 +362,17 @@ class TestNodePopulation:
         assert "Unknown node properties" in e.value.args[0]
 
         assert _call(np.int32(0), Cell.MTYPE) == "L2_X"
+        expected = pd.DataFrame(
+            {
+                Cell.X: np.array([201.0, 301], dtype=np.float32),
+                Cell.MTYPE: ["L6_Y", "L6_Y"],
+                Cell.HOLDING_CURRENT: np.array([0.2, 0.3], dtype=np.float32),
+            },
+            index=pd.Index([1, 2], name="node_ids"),
+        )
+
         pdt.assert_frame_equal(
-            _call([1, 2], properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
-            pd.DataFrame(
-                [
-                    [201.0, "L6_Y", 0.2],
-                    [301.0, "L6_Y", 0.3],
-                ],
-                columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
-                index=pd.Index([1, 2], name="node_ids"),
-            ),
+            _call([1, 2], properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]), expected
         )
 
         # NodeCircuitId same as [1, 2] for the default
@@ -371,14 +381,7 @@ class TestNodePopulation:
                 CircuitNodeIds.from_dict({"default": [1, 2]}),
                 properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
             ),
-            pd.DataFrame(
-                [
-                    [201.0, "L6_Y", 0.2],
-                    [301.0, "L6_Y", 0.3],
-                ],
-                columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
-                index=pd.Index([1, 2], name="node_ids"),
-            ),
+            expected,
         )
 
         # NodeCircuitId only consider the default population
@@ -387,24 +390,17 @@ class TestNodePopulation:
                 CircuitNodeIds.from_arrays(["default", "default", "default2"], [1, 2, 0]),
                 properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
             ),
-            pd.DataFrame(
-                [
-                    [201.0, "L6_Y", 0.2],
-                    [301.0, "L6_Y", 0.3],
-                ],
-                columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
-                index=pd.Index([1, 2], name="node_ids"),
-            ),
+            expected,
         )
 
         pdt.assert_frame_equal(
             _call("Node12_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]),
             pd.DataFrame(
-                [
-                    [201.0, "L6_Y", 6],
-                    [301.0, "L6_Y", 6],
-                ],
-                columns=[Cell.X, Cell.MTYPE, Cell.LAYER],
+                {
+                    Cell.X: np.array([201.0, 301], dtype=np.float32),
+                    Cell.MTYPE: ["L6_Y", "L6_Y"],
+                    Cell.LAYER: ["layer6", "layer6"],
+                },
                 index=pd.Index([1, 2], name="node_ids"),
             ),
         )
@@ -487,21 +483,24 @@ class TestNodePopulation:
                             [0.462986, 0.0, 0.886365],
                             [0.0, 1.0, 0.0],
                             [-0.886365, 0.0, 0.462986],
-                        ]
+                        ],
+                        dtype=np.float32,
                     ),
                     np.array(
                         [
                             [0.738219, 0.0, 0.674560],
                             [0.0, 1.0, 0.0],
                             [-0.674560, 0.0, 0.738219],
-                        ]
+                        ],
+                        dtype=np.float32,
                     ),
                     np.array(
                         [
                             [-0.86768965, -0.44169042, 0.22808825],
                             [0.48942842, -0.8393853, 0.23641518],
                             [0.0870316, 0.31676788, 0.94450178],
-                        ]
+                        ],
+                        dtype=np.float32,
                     ),
                 ],
                 index=pd.Index([2, 0, 1], name="node_ids"),
@@ -647,21 +646,29 @@ class TestNodePopulation:
         assert test_obj.size == 3
 
     def test_filter_properties(self):
-        assert self.test_obj._ordered_property_names == [
+        assert set(self.test_obj._ordered_property_names) == {
+            "etype",
             "layer",
             "model_template",
             "model_type",
             "morphology",
+            "morph_class",
             "mtype",
+            "orientation_w",
+            "orientation_x",
+            "orientation_y",
+            "orientation_z",
             "rotation_angle_xaxis",
             "rotation_angle_yaxis",
             "rotation_angle_zaxis",
+            "synapse_class",
             "x",
             "y",
             "z",
             "@dynamics:holding_current",
             "@dynamics:input_resistance",
-        ]
+            "@dynamics:threshold_current",
+        }
         existing = ["morphology", "mtype", "y"]
         desired = {"@dynamics:holding_current", "z", "x", "y", "model_type", "layer", "mtype"}
 
@@ -686,11 +693,11 @@ class TestNodePopulation:
 
         # dynamics attribute
         result = self.test_obj._get_values_from_sonata(nodes, "@dynamics:holding_current", [2])
-        assert_array_equal_strict(result, np.array([0.3], dtype=float))
+        assert_array_equal_strict(result, np.array([0.3], dtype=np.float32))
 
         # empty selection
         result = self.test_obj._get_values_from_sonata(nodes, "x", [])
-        assert_array_equal_strict(result, np.array([], dtype=float))
+        assert_array_equal_strict(result, np.array([], dtype=np.float32))
 
         # unknown attribute
         with pytest.raises(

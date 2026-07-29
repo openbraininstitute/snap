@@ -80,6 +80,16 @@ class TestEdges:
             "other1",
             "other2",
             "syn_weight",
+            "facilitation_time",
+            "decay_time",
+            "syn_type_id",
+            "afferent_segment_offset",
+            "depression_time",
+            "afferent_segment_id",
+            "afferent_section_type",
+            "u_syn",
+            "n_rrp_vesicles",
+            "spine_length",
         }
 
     def test_ids(self):
@@ -217,7 +227,7 @@ class TestEdges:
         tested = pd.concat(df for _, df in tested)
 
         assert len(tested) == 8
-        assert len(list(tested)) == 24
+        assert len(list(tested)) == 34
 
         # put NaN for the undefined values : only values for default2 in dropna
         assert len(tested.dropna()) == 4

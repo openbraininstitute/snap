@@ -218,7 +218,9 @@ def validate_nodes_schema(path, nodes_type, ignore_datatype_errors):
     return _wrap_errors(path, errors, "/", ignore_datatype_errors)
 
 
-def validate_edges_schema(path, edges_type, virtual, ignore_datatype_errors):
+def validate_edges_schema(
+    path, edges_type, virtual, ignore_datatype_errors, ignore_edge_properties
+):
     """Validates an edges file against a schema.
 
     Args:
@@ -226,6 +228,7 @@ def validate_edges_schema(path, edges_type, virtual, ignore_datatype_errors):
         edges_type (str): edge type (e.g., "chemical")
         virtual(bool): whether this is a virtual edge population
         ignore_datatype_errors (bool): Don't check if datatypes are correct
+        ignore_edge_properties(Iterable[str]): Edge properties to ignore when validating
 
     Returns:
         list: List of errors, empty if no errors
@@ -236,7 +239,13 @@ def validate_edges_schema(path, edges_type, virtual, ignore_datatype_errors):
     with h5py.File(path) as h5:
         edges_h5_dict = _get_h5_structure_as_dict(h5)
 
-    errors = _validate_schema_for_dict(_parse_schema("edge", edges_type), edges_h5_dict)
+    schema = _parse_schema("edge", edges_type)
+
+    required = schema["properties"]["edges"]["patternProperties"][""]["properties"]["0"]["required"]
+    schema["properties"]["edges"]["patternProperties"][""]["properties"]["0"]["required"] = list(
+        set(required) - set(ignore_edge_properties)
+    )
+    errors = _validate_schema_for_dict(schema, edges_h5_dict)
 
     return _wrap_errors(path, errors, "/", ignore_datatype_errors)
 

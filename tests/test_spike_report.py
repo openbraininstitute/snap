@@ -42,8 +42,8 @@ class TestSpikeReport:
     def test_config(self):
         assert isinstance(self.test_obj.config, Output)
         assert self.test_obj.config.output_dir == str(TEST_DATA_DIR / "reporting")
-        assert self.test_obj.config.log_file == "log_spikes.log"
-        assert self.test_obj.config.spikes_file == "spikes.h5"
+        assert self.test_obj.config.log_file == str(TEST_DATA_DIR / "reporting" / "log_spikes.log")
+        assert self.test_obj.config.spikes_file == str(TEST_DATA_DIR / "reporting" / "spikes.h5")
         assert self.test_obj.config.spikes_sort_order.name == "by_time"
 
     def test_time_start(self):

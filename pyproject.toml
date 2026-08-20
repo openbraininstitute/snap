@@ -31,7 +31,7 @@ license = "LGPL-3.0"
 bluepysnap = "bluepysnap.cli:cli"
 
 [project.optional-dependencies]
-docs = ["sphinx", "sphinx-bluebrain-theme"]
+docs = ["sphinx>=8.2,<10", "obi-sphinx-theme>=2.0.0"]
 plots = ["matplotlib>=3.0.0"]
 indexing = ["brain-indexer>=3.0.0"]
 

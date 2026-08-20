@@ -43,7 +43,7 @@ exclude_patterns = []
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "sphinx-bluebrain-theme"
+html_theme = "obi_sphinx_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -58,8 +58,14 @@ html_show_sourcelink = False
 
 # set the theme settings
 html_theme_options = {
-    "repo_url": "https://github.com/BlueBrain/snap/",
-    "repo_name": "BlueBrain/snap",
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/openbraininstitute/snap",
+            "icon": "fa-brands fa-github",
+        },
+    ],
+    "navbar_align": "left",
 }
 
 # autodoc settings
@@ -70,17 +76,17 @@ autodoc_default_options = {
 autoclass_content = "both"
 
 autodoc_mock_imports = ["libsonata"]
-autodoc_use_legacy_class_based = True  # needed until `sphinx-bluebrain-theme` supports sphinx 9
 
 # autosummary settings
 autosummary_generate = True
 
 suppress_warnings = [
     "autosectionlabel.*",
+    "ref.python",  # duplicate aliases exported by the package API
 ]
 
 # generate the link to the notebooks on GitHub
-_base_url = "https://github.com/BlueBrain/snap"
+_base_url = "https://github.com/openbraininstitute/snap"
 _git_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()  # noqa: S607
 extlinks = {
     "notebooks_source": (

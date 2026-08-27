@@ -56,18 +56,6 @@ html_title = "Blue Brain SNAP"
 # hide source links
 html_show_sourcelink = False
 
-# set the theme settings
-html_theme_options = {
-    "icon_links": [
-        {
-            "name": "GitHub",
-            "url": "https://github.com/openbraininstitute/snap",
-            "icon": "fa-brands fa-github",
-        },
-    ],
-    "navbar_align": "left",
-}
-
 # autodoc settings
 autodoc_default_options = {
     "members": True,

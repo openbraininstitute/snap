@@ -132,8 +132,7 @@ omit = [
 ]
 
 [tool.coverage.paths]
-# Map the wheel's site-packages path back to src so coverage and
-# codecov resolve repo-relative paths.
+# Map the wheel's site-packages path back to src for coverage/codecov.
 source = [
     "src/bluepysnap",
     "*/site-packages/bluepysnap",

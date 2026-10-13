@@ -24,13 +24,9 @@ import morphio
 import numpy as np
 
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.morph_constants import EXTENSIONS_MAPPING
 from bluepysnap.sonata_constants import Node
 from bluepysnap.utils import is_node_id
-
-EXTENSIONS_MAPPING = {
-    "asc": "neurolucida-asc",
-    "h5": "h5v1",
-}
 
 
 class MorphHelper:

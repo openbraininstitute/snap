@@ -14,7 +14,7 @@ import pandas as pd
 from bluepysnap import schemas
 from bluepysnap.config import Parser
 from bluepysnap.exceptions import BluepySnapValidationError
-from bluepysnap.morph import EXTENSIONS_MAPPING
+from bluepysnap.morph_constants import EXTENSIONS_MAPPING
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, DEFAULT_NODE_TYPE
 from bluepysnap.utils import load_json, print_validation_errors
 

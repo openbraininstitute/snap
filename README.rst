@@ -119,8 +119,8 @@ License
 
 Blue Brain SNAP is licensed under the terms of the GNU Lesser General Public License version 3,
 unless noted otherwise, for example, external dependencies.
-Refer to `COPYING.LESSER <https://github.com/openbraininstitute/snap/blob/master/COPYING.LESSER>`__ and
-`COPYING <https://github.com/openbraininstitute/snap/blob/master/COPYING>`__ for details.
+Refer to `COPYING.LESSER <https://github.com/openbraininstitute/snap/blob/main/COPYING.LESSER>`__ and
+`COPYING <https://github.com/openbraininstitute/snap/blob/main/COPYING>`__ for details.
 
 Copyright (c) 2019-2024 Blue Brain Project/EPFL
 
@@ -143,15 +143,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
    :alt: Build Status
 
 .. |license| image:: https://img.shields.io/pypi/l/bluepysnap
-   :target: https://github.com/openbraininstitute/snap/blob/master/COPYING.LESSER
+   :target: https://github.com/openbraininstitute/snap/blob/main/COPYING.LESSER
    :alt: License
 
-.. |coverage| image:: https://codecov.io/github/openbraininstitute/snap/coverage.svg?branch=master
-   :target: https://codecov.io/github/openbraininstitute/snap?branch=master
+.. |coverage| image:: https://codecov.io/github/openbraininstitute/snap/coverage.svg?branch=main
+   :target: https://codecov.io/github/openbraininstitute/snap?branch=main
    :alt: codecov.io
 
-.. |docs| image:: https://readthedocs.org/projects/openbraininstitute/badge/?version=latest
-   :target: https://openbraininstitute.readthedocs.io/
+.. |docs| image:: https://readthedocs.org/projects/bluebrainsnap/badge/?version=latest
+   :target: https://bluebrainsnap.readthedocs.io/
    :alt: documentation status
 
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8026852.svg

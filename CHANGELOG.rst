@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Version v3.1.0
+Version v3.0.2
 --------------
 
 Improvements

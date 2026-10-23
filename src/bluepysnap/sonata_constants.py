@@ -50,12 +50,12 @@ class ConstContainer:
         for base in cls.__bases__:
             if base is object:
                 continue
-            try:
-                all_keys.update(base.key_set())
-            except AttributeError as e:
+            base_key_set = getattr(base, "key_set", None)
+            if base_key_set is None:
                 raise BluepySnapError(
                     "Container classes must derive from classes implementing key_set method"
-                ) from e
+                )
+            all_keys.update(base_key_set())
         all_keys.update(
             name
             for name in vars(cls)

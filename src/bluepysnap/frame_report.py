@@ -19,6 +19,7 @@
 import logging
 from collections.abc import Mapping
 from functools import cached_property
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -30,6 +31,9 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import ensure_ids
 
 L = logging.getLogger(__name__)
+
+# The copy keyword of pd.concat is deprecated since pandas 3, where Copy-on-Write is always active
+_CONCAT_NO_COPY: dict[str, Any] = {} if int(pd.__version__.split(".")[0]) >= 3 else {"copy": False}
 
 
 def _collect_population_reports(frame_report, cls):
@@ -172,7 +176,7 @@ class FilteredFrameReport:
             dataframes[population] = df
         # optimize when there is at most one non-empty df: use copy=False, and no need to sort
         if sum(not df.empty for df in dataframes.values()) <= 1:
-            return pd.concat(dataframes, axis=1, copy=False)
+            return pd.concat(dataframes, axis=1, **_CONCAT_NO_COPY)
         # when concatenating multiple df, don't use copy=False because 2x slower (Pandas 2.0.2)
         result = pd.concat(dataframes, axis=1)
         return result.sort_index(axis=0).sort_index(axis=1)

@@ -17,6 +17,7 @@
 """Plotting module for the different snap objects."""
 
 import logging
+from typing import TypedDict
 
 import numpy as np
 import pandas as pd
@@ -27,6 +28,14 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
 
 L = logging.getLogger(__name__)
+
+
+class _RasterProperties(TypedDict):
+    node_id_offset: int
+    pop_separators: list[int]
+    categorical_values: set
+    ymin: float
+    ymax: float
 
 
 def _get_pyplot():
@@ -114,7 +123,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):
     spike_report = filtered_report.spike_report
     population_names = filtered_report.spike_report.population_names
 
-    props = {
+    props: _RasterProperties = {
         "node_id_offset": 0,
         "pop_separators": [],
         "categorical_values": set(),

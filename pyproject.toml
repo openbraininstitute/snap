@@ -23,7 +23,7 @@ dependencies = [
     "more-itertools>=8.2.0",
     "referencing",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 readme = "README.rst"
 license = "LGPL-3.0"
 
@@ -50,7 +50,7 @@ version_file = "src/bluepysnap/_version.py"
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [

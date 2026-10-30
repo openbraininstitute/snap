@@ -125,12 +125,6 @@ class TestDeprecate:
             test_module.Deprecate.fail("something")
 
     def test_warning(self):
-        import warnings
-
-        with warnings.catch_warnings(record=True) as w:
+        with pytest.warns(BluepySnapDeprecationWarning, match="something") as w:
             test_module.Deprecate.warn("something")
-
-            # Verify some things
-            assert len(w) == 1
-            assert issubclass(w[-1].category, BluepySnapDeprecationWarning)
-            assert "something" in str(w[-1].message)
+        assert len(w) == 1

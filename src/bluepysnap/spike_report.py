@@ -127,7 +127,7 @@ class PopulationSpikeReport:
         # pylint: disable=unsubscriptable-object
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":
-            res.sort_index(inplace=True)
+            res = res.sort_index()
         return res.astype(IDS_DTYPE)
 
     @cached_property

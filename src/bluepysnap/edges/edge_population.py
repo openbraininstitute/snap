@@ -330,9 +330,9 @@ class EdgePopulation:
         assert kind in ("center", "surface")
         props = {f"{side}_{kind}_{p}": p for p in ["x", "y", "z"]}
         result = self.get(edge_ids, list(props))
-        result.rename(columns=props, inplace=True)
-        result.sort_index(axis=1, inplace=True)
-        return result
+        # assign the columns instead of using rename, because rename copies the data in pandas<3
+        result.columns = [props[c] for c in result.columns]
+        return result.sort_index(axis=1)
 
     def afferent_nodes(self, target, unique=True):
         """Get afferent node IDs for given target ``node_id``.

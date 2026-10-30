@@ -289,7 +289,7 @@ def _check_nodes_group(group_df, group, population, population_name):
     errors = []
     if "model_type" in group_df and group_df["model_type"][0] != population["type"]:
         errors.append(
-            BluepySnapValidationError.warning(
+            BluepySnapValidationError.fatal(
                 f"Population '{population_name}' type mismatch: "
                 f"'{group_df['model_type'][0]}' (nodes_file), "
                 f"'{population['type']}' (config)"

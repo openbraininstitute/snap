@@ -235,7 +235,7 @@ def test_population_type_mismatch():
             config["networks"]["nodes"][0]["populations"]["default"]["type"] = fake_type
         errors = validate_without_schema(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError.warning(
+            BluepySnapValidationError.fatal(
                 (
                     "Population 'default' type mismatch: "
                     f"'biophysical' (nodes_file), '{fake_type}' (config)"

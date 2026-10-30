@@ -374,6 +374,75 @@ def test_container_bio_alternate_morphology_dir():
         assert errors == {BluepySnapValidationError.fatal("Missing `morph-C` from container")}
 
 
+def test_container_bio_nested_morphology_name_ok():
+    """A morphology name may be a path into the container (e.g. "morphology/<id>").
+
+    Some containers group morphologies under a subgroup rather than at the top level (e.g. spiny
+    morphologies), and the nodes table then stores the morphology name as the full in-container
+    path. Such names must resolve against the container instead of being reported as missing.
+    """
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        container_path = circuit_copy_path / "morphologies/nested-morphs.h5"
+        nodes_file = circuit_copy_path / "nodes.h5"
+
+        with h5py.File(nodes_file, "r+") as h5f:
+            names = set(h5f["nodes/default/0/morphology"].asstr()[:])
+            # Store each morphology name as a path into the container's "morphology" group
+            nested = {name: f"morphology/{name}" for name in names}
+            morphology = h5f["nodes/default/0/morphology"]
+            morphology[:] = [nested[m] for m in morphology.asstr()[:]]
+
+        # Build a container that nests the morphologies one level down under "morphology/"
+        with h5py.File(container_path, "w") as h5f:
+            for name in names:
+                h5f.create_group(f"morphology/{name}")
+
+        with edit_config(config_copy_path) as config:
+            # Only validate against the h5 container (not the swc morphologies_dir), and focus on
+            # the single 'default' population.
+            del config["components"]["morphologies_dir"]
+            del config["networks"]["nodes"][0]["populations"]["default2"]
+            config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
+                "h5v1": str(container_path)
+            }
+
+        errors = validate_without_schema(str(config_copy_path))
+        assert errors == set()
+
+
+def test_container_bio_nested_morphology_name_missing():
+    """A nested morphology name that is absent from the container is still reported missing."""
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        container_path = circuit_copy_path / "morphologies/nested-morphs.h5"
+        nodes_file = circuit_copy_path / "nodes.h5"
+
+        with h5py.File(nodes_file, "r+") as h5f:
+            names = set(h5f["nodes/default/0/morphology"].asstr()[:])
+            nested = {name: f"morphology/{name}" for name in names}
+            morphology = h5f["nodes/default/0/morphology"]
+            morphology[:] = [nested[m] for m in morphology.asstr()[:]]
+
+        # Build a container with every morphology nested except one, which is left out
+        missing_name = sorted(names)[0]
+        with h5py.File(container_path, "w") as h5f:
+            for name in names - {missing_name}:
+                h5f.create_group(f"morphology/{name}")
+
+        with edit_config(config_copy_path) as config:
+            # Only validate against the h5 container (not the swc morphologies_dir), and focus on
+            # the single 'default' population.
+            del config["components"]["morphologies_dir"]
+            del config["networks"]["nodes"][0]["populations"]["default2"]
+            config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
+                "h5v1": str(container_path)
+            }
+
+        errors = validate_without_schema(str(config_copy_path))
+        assert errors == {
+            BluepySnapValidationError.fatal(f"Missing `morphology/{missing_name}` from container")
+        }
+
+
 @patch("bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY", 0)
 def test_container_bio_alternate_morphology_dir_missing_many():
     with copy_test_data() as (circuit_copy_path, config_copy_path):

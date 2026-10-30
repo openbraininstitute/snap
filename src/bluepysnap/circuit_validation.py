@@ -229,7 +229,8 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
 
             if extension == "h5" and Path(morph_path).is_file():
                 with h5py.File(morph_path) as h5:
-                    missing = set(group_df["morphology"].unique()) - set(h5)
+                    # Compare each name as path (e.g., "morphology/<id>" in spiny morphologies)
+                    missing = {m for m in group_df["morphology"].unique() if m not in h5}
                 if len(missing) > MAX_MISSING_FILES_DISPLAY:
                     msg = (
                         f"Missing at least {len(missing)} morphologies in the container: "

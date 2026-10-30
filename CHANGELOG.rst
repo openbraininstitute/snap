@@ -1,6 +1,8 @@
 Changelog
 =========
 
+Starting from v3.0.3, the changes are listed in the `GitHub releases <https://github.com/openbraininstitute/snap/releases>`_.
+
 Version v3.0.2
 --------------
 

@@ -172,6 +172,62 @@ def test_ok_nonbio_type(model_type):
         assert errors == set()
 
 
+def test_ok_mixed_model_type_in_single_nodes_file():
+    """A single nodes file may contain populations of different model_types (biophysical + virtual).
+
+    Each population must be validated against the schema for its own model_type, so a valid
+    biophysical population and a valid virtual population in the same file both pass without
+    the required fields of one type being enforced on the other.
+    """
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        # Turn 'default2' into a valid virtual population alongside biophysical 'default'
+        with edit_config(config_copy_path) as config:
+            config["networks"]["nodes"][0]["populations"]["default2"] = {"type": "virtual"}
+
+        nodes_file = circuit_copy_path / "nodes.h5"
+        virtual_only = ["orientation_w", "orientation_x", "orientation_y", "orientation_z"]
+        with h5py.File(nodes_file, "r+") as h5f:
+            h5f["nodes/default2/0/model_type"][:] = "virtual"
+            for r in virtual_only:
+                del h5f[f"nodes/default2/0/{r}"]
+
+        errors = test_module.validate(
+            str(config_copy_path), skip_slow=False, only_errors=False, print_errors=False
+        )
+        assert errors == set()
+
+
+def test_errors_accumulate_across_populations_in_one_block():
+    """Errors from every population in a node block must be reported, not just the last one.
+
+    Guards against the schema-validation result overwriting (rather than extending) the error
+    list while looping over the populations of a single node block. Uses the real schema
+    validation (not the mocked one) so each call returns an independent list.
+    """
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        # 'default' (first, biophysical) is made invalid; 'default2' is a valid virtual population.
+        # The first population's error must survive even though the second validates cleanly.
+        with edit_config(config_copy_path) as config:
+            config["networks"]["nodes"][0]["populations"]["default2"] = {"type": "virtual"}
+
+        nodes_file = circuit_copy_path / "nodes.h5"
+        virtual_only = ["orientation_w", "orientation_x", "orientation_y", "orientation_z"]
+        with h5py.File(nodes_file, "r+") as h5f:
+            # Make 'default' invalid for the biophysical schema
+            del h5f["nodes/default/0/orientation_w"]
+            # Make 'default2' a valid virtual population
+            h5f["nodes/default2/0/model_type"][:] = "virtual"
+            for r in virtual_only:
+                del h5f[f"nodes/default2/0/{r}"]
+
+        errors = test_module.validate(
+            str(config_copy_path), skip_slow=True, only_errors=True, print_errors=False
+        )
+        messages = "\n".join(str(e) for e in errors)
+        assert "'orientation_w' is a required property" in messages
+        assert "nodes/default/0" in messages
+
+
 def test_population_type_mismatch():
     with copy_test_data() as (_, config_copy_path):
         fake_type = "fake_type"

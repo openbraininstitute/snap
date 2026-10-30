@@ -199,19 +199,30 @@ def validate_circuit_schema(path, config, ignore_datatype_errors):
     return _wrap_errors(path, errors, ".", ignore_datatype_errors)
 
 
-def validate_nodes_schema(path, nodes_type, ignore_datatype_errors):
+def validate_nodes_schema(path, nodes_type, ignore_datatype_errors, population_name=None):
     """Validates a nodes file against a schema.
 
     Args:
         path (str): path to the nodes file
         nodes_type (str): node type (e.g., "biophysical")
         ignore_datatype_errors (bool): Don't check if datatypes are correct
+        population_name (str): if given, validate only this population against ``nodes_type``;
+            other populations in the file are left untouched. If ``None``, every population in
+            the file is validated against ``nodes_type``.
 
     Returns:
         list: List of errors, empty if no errors
     """
     with h5py.File(path) as h5:
         nodes_h5_dict = _get_h5_structure_as_dict(h5)
+
+    if population_name is not None and "nodes" in nodes_h5_dict:
+        populations = nodes_h5_dict["nodes"]
+        if population_name in populations:
+            nodes_h5_dict = {
+                **nodes_h5_dict,
+                "nodes": {population_name: populations[population_name]},
+            }
 
     errors = _validate_schema_for_dict(_parse_schema("node", nodes_type), nodes_h5_dict)
 

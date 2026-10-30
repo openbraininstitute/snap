@@ -591,8 +591,11 @@ def validate_nodes_dict(nodes_dict, components, ignore_datatype_errors):
         nodes_file = nodes_dict["nodes_file"]
 
         if Path(nodes_file).is_file():
-            errors = schemas.validate_nodes_schema(
-                nodes_file, population["type"], ignore_datatype_errors
+            errors += schemas.validate_nodes_schema(
+                nodes_file,
+                population["type"],
+                ignore_datatype_errors,
+                population_name=pop_name,
             )
             errors += validate_node_population(nodes_file, population, pop_name)
         else:

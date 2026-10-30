@@ -381,6 +381,61 @@ def test_2_node_populations():
         assert len(errors) == 0
 
 
+def test_mixed_model_type_node_populations_ok():
+    """A file with a biophysical and a virtual population validates clean per population.
+
+    Each population must be validated against the schema for its own ``model_type``: validating
+    the whole file against one type's schema would wrongly enforce that type's required fields on
+    the other population (e.g. requiring 'orientation_w' on the virtual population).
+    """
+    with copy_test_data() as (circuit_copy_path, _):
+        nodes_file = circuit_copy_path / "nodes_single_pop.h5"
+        virtual_only = ["orientation_w", "orientation_x", "orientation_y", "orientation_z"]
+        with h5py.File(nodes_file, "r+") as h5f:
+            # Add a virtual population alongside the existing biophysical 'default' population.
+            # Use copy (not a hard link) so the populations are independent objects.
+            h5f.copy("nodes/default", "nodes/virtual_pop")
+            for r in virtual_only:
+                del h5f[f"nodes/virtual_pop/0/{r}"]
+
+        # The biophysical population validates clean against the biophysical schema ...
+        errors = test_module.validate_nodes_schema(
+            str(nodes_file),
+            "biophysical",
+            ignore_datatype_errors=False,
+            population_name="default",
+        )
+        assert len(errors) == 0
+
+        # ... and the virtual population validates clean against the virtual schema.
+        errors = test_module.validate_nodes_schema(
+            str(nodes_file),
+            "virtual",
+            ignore_datatype_errors=False,
+            population_name="virtual_pop",
+        )
+        assert len(errors) == 0
+
+
+def test_mixed_model_type_node_populations_malformed_still_fails():
+    """Scoping to one population must still catch a genuinely malformed population."""
+    with copy_test_data() as (circuit_copy_path, _):
+        nodes_file = circuit_copy_path / "nodes_single_pop.h5"
+        with h5py.File(nodes_file, "r+") as h5f:
+            h5f.copy("nodes/default", "nodes/virtual_pop")
+            # A biophysical population legitimately missing a required field
+            del h5f["nodes/default/0/orientation_w"]
+
+        errors = test_module.validate_nodes_schema(
+            str(nodes_file),
+            "biophysical",
+            ignore_datatype_errors=False,
+            population_name="default",
+        )
+        assert len(errors) == 1
+        assert "'orientation_w' is a required property" in errors[0].message
+
+
 def test_virtual_edge_population_ok():
     with copy_test_data() as (circuit_copy_path, _):
         edges_file = circuit_copy_path / "edges_single_pop.h5"

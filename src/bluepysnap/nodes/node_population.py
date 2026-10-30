@@ -119,7 +119,10 @@ class NodePopulation:
             # categorical reduces the memory usage.
             # We compare with nodes.size instead of len(enumeration) to not depend on the selection.
             if len(values) < 0.5 * nodes.size:
-                return pd.Categorical.from_codes(enumeration, categories=values)
+                # pandas accepts any index-like categories, but pandas-stubs only accepts Index
+                return pd.Categorical.from_codes(  # ty: ignore[no-matching-overload]
+                    enumeration, categories=values
+                )
             return values[enumeration]
         if attr in nodes.attribute_names:
             return nodes.get_attribute(attr, selection)

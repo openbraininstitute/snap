@@ -81,7 +81,8 @@ class Edges(
         fun = lambda x: (x.ids(group), x.name)
         return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
-    def get(self, edge_ids=None, properties=None):  # pylint: disable=arguments-renamed
+    # the parameter is renamed on purpose, to document that only edge ids are accepted
+    def get(self, edge_ids=None, properties=None):  # ty: ignore[invalid-method-override]
         """Edge properties by iterating populations.
 
         Args:

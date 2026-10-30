@@ -125,6 +125,13 @@ docstring-code-line-length = 100
 # Like Black, respect magic trailing commas.
 skip-magic-trailing-comma = false
 
+[tool.ty.environment]
+python-version = "3.11"
+
+[tool.ty.analysis]
+# optional runtime dependency, only detected via import (requires NEURON), not installed for type checking
+allowed-unresolved-imports = ["neurodamus", "neurodamus.**"]
+
 [tool.coverage.run]
 source_pkgs = ["bluepysnap"]
 omit = [

@@ -11,17 +11,16 @@ authors = [
     {name = "Blue Brain Project, EPFL"},
 ]
 dependencies = [
-    "h5py>=3.0.1,<4.0.0",
-    "importlib_resources>=5.0.0",
-    "jsonschema>=4.18.0,<5.0.0",
-    "libsonata>=0.1.24,<1.0.0",
-    "morphio>=3.3.5,<4.0.0",
+    "h5py>=3.12,<4.0.0",
+    "jsonschema>=4.21.0,<5.0.0",
+    "libsonata>=0.2.0,<1.0.0",
+    "morphio>=3.3.8,<4.0.0",
     "morph-tool>=2.4.3,<3.0.0",
-    "numpy>=1.8",
-    "pandas>=1.0.0",
-    "click>=7.0",
+    "numpy>=2.2",
+    "pandas>=2.3",
+    "click>=8.0",
     "more-itertools>=8.2.0",
-    "referencing",
+    "referencing>=0.28.4",
 ]
 requires-python = ">=3.11"
 readme = "README.rst"
@@ -39,7 +38,7 @@ bluepysnap = "bluepysnap.cli:cli"
 
 [project.optional-dependencies]
 docs = ["sphinx>=8.2,<10", "obi-sphinx-theme>=2.0.0"]
-plots = ["matplotlib>=3.0.0"]
+plots = ["matplotlib>=3.10.7"]
 indexing = ["brain-indexer>=3.0.0"]
 
 [tool.setuptools.packages.find]

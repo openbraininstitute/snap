@@ -1,9 +1,9 @@
 """Functions for schema based validation of circuit files."""
 
+from importlib.resources import files
 from pathlib import Path
 
 import h5py
-import importlib_resources
 import jsonschema
 import numpy as np
 import yaml
@@ -17,7 +17,7 @@ DEFINITIONS = "definitions"
 def _load_schema_file(*args):
     """Load one of the predefined YAML schema files."""
     filename = str(Path(*args).with_suffix(".yaml"))
-    filepath = importlib_resources.files(__package__) / filename
+    filepath = files("bluepysnap.schemas") / filename
     if not filepath.is_file():
         raise FileNotFoundError(f"Schema file {filepath} not found")
     return yaml.safe_load(filepath.read_text())

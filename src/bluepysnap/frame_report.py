@@ -113,7 +113,7 @@ class PopulationFrameReport:
         # the results are the same regardless of the libsonata version [NSETM-1766]
         res = pd.DataFrame(
             data=view.data,
-            columns=pd.MultiIndex.from_arrays(ensure_ids(view.ids).T),
+            columns=pd.MultiIndex.from_arrays(list(ensure_ids(view.ids).T)),
             index=view.times,
         ).sort_index(axis=1)
 

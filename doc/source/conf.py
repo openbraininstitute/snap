@@ -63,6 +63,9 @@ autodoc_default_options = {
 
 autoclass_content = "both"
 
+# show the type annotations in the parameter and return descriptions, not in the signatures
+autodoc_typehints = "description"
+
 autodoc_mock_imports = ["libsonata"]
 
 # autosummary settings

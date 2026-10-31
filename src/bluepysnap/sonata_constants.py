@@ -16,6 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Module including the sonata node and edge namespaces."""
 
+from typing import Any
+
 from bluepysnap.exceptions import BluepySnapError
 
 DYNAMICS_PREFIX = "@dynamics:"
@@ -44,9 +46,9 @@ class ConstContainer:
     """
 
     @classmethod
-    def key_set(cls):
+    def key_set(cls) -> set[str]:
         """List all constant members of the class."""
-        all_keys = set()
+        all_keys: set[str] = set()
         for base in cls.__bases__:
             if base is object:
                 continue
@@ -64,7 +66,7 @@ class ConstContainer:
         return all_keys
 
     @classmethod
-    def get(cls, const_name):
+    def get(cls, const_name: str) -> Any:
         """Get a constant from a string name."""
         try:
             res = getattr(cls, const_name)

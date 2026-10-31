@@ -94,6 +94,8 @@ extlinks = {
 
 # Sphinx shows typing.Self literally: replace it with the class that the method is documented on,
 # which is what Self means (e.g. CircuitNodeIds.filter_population returns a CircuitNodeIds).
+# This covers the parameter and return types in the descriptions. The signatures of overloaded
+# methods still show Self, because autodoc generates them after this event.
 _SELF_RE = re.compile(r"(?<![\w.])~?(?:typing\.)?Self\b")
 
 

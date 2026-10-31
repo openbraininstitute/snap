@@ -176,6 +176,17 @@ class TestEdgePopulation:
         npt.assert_equal(tested, np.array([0, 1, 2, 3]))
         npt.assert_equal(tested.dtype, IDS_DTYPE)
 
+    def test_edge_ids_by_filter_empty_population(self):
+        # with no edges, the properties must reach pandas as a list: a set raises a ValueError
+        empty = np.array([], dtype=IDS_DTYPE)
+        with mock.patch.object(self.test_obj, "ids", return_value=empty):
+            tested = self.test_obj._edge_ids_by_filter(
+                {Synapse.AXONAL_DELAY: (0.0, 100.0), Synapse.SOURCE_NODE_ID: 0},
+                raise_missing_prop=True,
+            )
+        npt.assert_equal(tested, empty)
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
+
         assert self.test_obj.ids(0) == [0]
         assert self.test_obj.ids(np.int64(0)) == [0]
         assert self.test_obj.ids(np.uint64(0)) == [0]

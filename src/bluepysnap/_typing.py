@@ -21,7 +21,7 @@ NodeId: TypeAlias = int | np.integer | CircuitNodeId
 #: Used in the overloads, to separate the single node case, which returns different types.
 MultiNodeGroup: TypeAlias = (
     CircuitNodeIds
-    | Sequence[int]
+    | Sequence[int | np.integer]
     | Sequence[CircuitNodeId]
     | npt.NDArray[np.integer]
     | str
@@ -41,7 +41,7 @@ EdgeId: TypeAlias = int | np.integer | CircuitEdgeId
 EdgeGroup: TypeAlias = (
     EdgeId
     | CircuitEdgeIds
-    | Sequence[int]
+    | Sequence[int | np.integer]
     | Sequence[CircuitEdgeId]
     | npt.NDArray[np.integer]
     | Mapping[str, Any]

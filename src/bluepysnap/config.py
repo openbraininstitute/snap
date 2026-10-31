@@ -19,8 +19,10 @@
 
 import copy
 import json
+import os
 from collections.abc import Iterable, Mapping
 from pathlib import Path
+from typing import Any, Self
 
 import libsonata
 from libsonata import CircuitConfigStatus
@@ -55,15 +57,15 @@ class Parser:
         https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#network_config
     """
 
-    def __init__(self, config, config_dir):
+    def __init__(self, config: dict[str, Any], config_dir: str) -> None:
         """Initializes a Resolver object.
 
         Args:
-            config (dict): Dict containing the config.
-            config_dir(str):  Path to the directory containing the config file.
+            config: Dict containing the config.
+            config_dir:  Path to the directory containing the config file.
 
         Returns:
-             Parser: A Parser object.
+             A Parser object.
         """
         content = config.copy()
         manifest = content.pop("manifest", None) or {}
@@ -71,7 +73,7 @@ class Parser:
         self.content = content
 
     @staticmethod
-    def _resolve_manifest(manifest, configdir):
+    def _resolve_manifest(manifest: dict[str, Any], configdir: str) -> dict[str, str]:
         result = manifest.copy()
 
         for k, v in result.items():
@@ -101,7 +103,7 @@ class Parser:
 
         return result
 
-    def _resolve_string(self, value, key):
+    def _resolve_string(self, value: str, key: str | None) -> str:
         # not a startswith to detect the badly placed anchors
         if "$" in value:
             vs = [self.manifest[v] if v.startswith("$") else v for v in value.split("/")]
@@ -118,7 +120,7 @@ class Parser:
             # we cannot know if a string is a path or not if it does not contain anchor or .
             return value
 
-    def _resolve(self, value, key=None):
+    def _resolve(self, value: Any, key: str | None = None) -> Any:
         if isinstance(value, Mapping):
             return {k: self._resolve(v, k) for k, v in value.items()}
         elif isinstance(value, str):
@@ -128,12 +130,12 @@ class Parser:
         else:
             return value
 
-    def resolve(self):
+    def resolve(self) -> dict[str, Any]:
         """Resolve variables in config file paths."""
         return self._resolve(self.content)
 
     @staticmethod
-    def parse(config, configdir):
+    def parse(config: dict[str, Any], configdir: str) -> dict[str, Any]:
         """Parse SONATA network config."""
         return Parser(config, configdir).resolve()
 
@@ -141,23 +143,31 @@ class Parser:
 class Config:
     """Common config class."""
 
-    def __init__(self, config, config_class):
+    def __init__(
+        self,
+        config: str | os.PathLike[str],
+        config_class: type[libsonata.CircuitConfig] | type[libsonata.SimulationConfig],
+    ) -> None:
         """Initializes the Config class.
 
         Args:
-            config (str): Path to the configuration file
-            config_class (class): libsonata class corresponding to the configuration file, either
+            config: Path to the configuration file
+            config_class: libsonata class corresponding to the configuration file, either
                 libsonata.CircuitConfig or libsonata.SimulationConfig
         """
         self._config_dir = str(Path(config).parent.absolute())
         self._libsonata = config_class.from_file(config)
 
     @property
-    def to_libsonata(self):
-        """Return the libsonata instance of the config."""
+    def to_libsonata(self) -> Any:
+        """Return the libsonata instance of the config.
+
+        It's a ``libsonata.CircuitConfig`` or a ``libsonata.SimulationConfig``, depending on the
+        subclass.
+        """
         return self._libsonata
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         """Return the configuration as a dict with absolute paths."""
         return Parser.parse(json.loads(self._libsonata.expanded_json), self._config_dir)
 
@@ -165,23 +175,23 @@ class Config:
 class CircuitConfig(Config):
     """Handle CircuitConfig."""
 
-    def __init__(self, *args):
+    def __init__(self, *args: Any) -> None:
         """Initializes circuit config."""
         super().__init__(*args)
         self._populations = self._resolve_population_configs(self.to_dict())
 
     @classmethod
-    def from_config(cls, config_path):
+    def from_config(cls, config_path: str | os.PathLike[str]) -> Self:
         """Instantiate the config class from circuit configuration."""
         return cls(config_path, libsonata.CircuitConfig)
 
     @property
-    def node_populations(self):
+    def node_populations(self) -> dict[str, dict[str, Any]]:
         """Access node population configs."""
         return self._populations["nodes"]
 
     @property
-    def edge_populations(self):
+    def edge_populations(self) -> dict[str, dict[str, Any]]:
         """Access edge population configs."""
         return self._populations["edges"]
 
@@ -191,13 +201,15 @@ class CircuitConfig(Config):
         return self._libsonata.config_status
 
     @staticmethod
-    def _resolve_population_configs(config):
+    def _resolve_population_configs(
+        config: dict[str, Any],
+    ) -> dict[str, dict[str, dict[str, Any]]]:
         """Resolves population configs for the node and edge populations."""
         networks = config.get("networks") or {}
         components = config.get("components") or {}
 
-        def resolve_network_populations(element_type):
-            populations = {}
+        def resolve_network_populations(element_type: str) -> dict[str, dict[str, Any]]:
+            populations: dict[str, dict[str, Any]] = {}
             type_file_key = f"{element_type}_file"
             element_dicts = networks.get(element_type) or []
 
@@ -224,6 +236,6 @@ class SimulationConfig(Config):
     """Handle SimulationConfig."""
 
     @classmethod
-    def from_config(cls, config_path):
+    def from_config(cls, config_path: str | os.PathLike[str]) -> Self:
         """Instantiate the config class from simulation configuration."""
         return cls(config_path, libsonata.SimulationConfig)

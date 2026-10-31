@@ -1,7 +1,10 @@
 """Functions for schema based validation of circuit files."""
 
+import os
+from collections.abc import Iterable, Mapping
 from importlib.resources import files
 from pathlib import Path
+from typing import Any, cast
 
 import h5py
 import jsonschema
@@ -14,7 +17,7 @@ from bluepysnap.exceptions import BluepySnapValidationError
 DEFINITIONS = "definitions"
 
 
-def _load_schema_file(*args):
+def _load_schema_file(*args: str) -> dict[str, Any]:
     """Load one of the predefined YAML schema files."""
     filename = str(Path(*args).with_suffix(".yaml"))
     filepath = files("bluepysnap.schemas") / filename
@@ -23,8 +26,8 @@ def _load_schema_file(*args):
     return yaml.safe_load(filepath.read_text())
 
 
-def _parse_path(path, join_str):
-    error_path = []
+def _parse_path(path: Iterable[str | int], join_str: str) -> str:
+    error_path: list[str] = []
 
     for item in path:
         # show list index in the [0] format
@@ -36,7 +39,12 @@ def _parse_path(path, join_str):
     return join_str.join(error_path)
 
 
-def _wrap_errors(filepath, schema_errors, join_str, ignore_datatype_errors):
+def _wrap_errors(
+    filepath: str | os.PathLike[str],
+    schema_errors: Iterable[jsonschema.ValidationError],
+    join_str: str,
+    ignore_datatype_errors: bool,
+) -> list[BluepySnapValidationError]:
     """Handles parsing of schema errors into more meaningful messages.
 
     Also wraps all the warngings and errors to single Error instances.
@@ -53,6 +61,8 @@ def _wrap_errors(filepath, schema_errors, join_str, ignore_datatype_errors):
     errors = []
 
     for e in schema_errors:
+        # the schemas used here are dicts, while jsonschema also allows booleans
+        schema = cast(Mapping[str, Any], e.schema)
         if not e.path:
             errors.append(e.message)
         elif e.path[-1] == "datatype":
@@ -60,9 +70,9 @@ def _wrap_errors(filepath, schema_errors, join_str, ignore_datatype_errors):
                 path = _parse_path(list(e.path)[:-1], join_str)
                 warnings.append(f"incorrect datatype '{e.instance}' for '{path}': {e.message}")
         else:
-            if e.schema_path[-1] in e.schema.get("messages", {}):
+            if e.schema_path[-1] in schema.get("messages", {}):
                 path = _parse_path(e.path, join_str)
-                message = e.schema["messages"][e.schema_path[-1]]
+                message = schema["messages"][e.schema_path[-1]]
                 message = f"{path}: {message}"
             elif e.schema_path[-1] in ("maxProperties", "minProperties"):
                 path = _parse_path(e.path, join_str)
@@ -71,11 +81,11 @@ def _wrap_errors(filepath, schema_errors, join_str, ignore_datatype_errors):
             elif e.path[-1] == "attributes":
                 # Add special message in case of attribute missing
                 path = _parse_path(list(e.path)[:-1], join_str)
-                attributes = e.schema["required"]
+                attributes = schema["required"]
                 message = f"{path}: missing required attribute(s) {attributes}"
-            elif "attributes" in e.schema.get("required", []):
+            elif "attributes" in schema.get("required", []):
                 path = _parse_path(e.path, join_str)
-                attributes = e.schema["properties"]["attributes"]["required"]
+                attributes = schema["properties"]["attributes"]["required"]
                 message = f"{path}: missing required attribute(s) {attributes}"
             else:
                 path = _parse_path(e.path, join_str)
@@ -86,31 +96,33 @@ def _wrap_errors(filepath, schema_errors, join_str, ignore_datatype_errors):
     ret_errors = []
 
     if len(warnings) > 0:
-        message = filepath + ":\n\t" + "\n\t".join(warnings)
+        message = f"{filepath}:\n\t" + "\n\t".join(warnings)
         ret_errors.append(BluepySnapValidationError.warning(message))
     if len(errors) > 0:
-        message = filepath + ":\n\t" + "\n\t".join(errors)
+        message = f"{filepath}:\n\t" + "\n\t".join(errors)
         ret_errors.append(BluepySnapValidationError.fatal(message))
 
     return ret_errors
 
 
-def _validate_schema_for_dict(schema, dict_):
+def _validate_schema_for_dict(
+    schema: dict[str, Any], dict_: dict[str, Any]
+) -> Iterable[jsonschema.ValidationError]:
     """Run a schema validation for a dictionary."""
     validator = jsonschema.validators.Draft202012Validator(schema)
 
     return validator.iter_errors(dict_)
 
 
-def _parse_schema(object_type, sub_type=None):
+def _parse_schema(object_type: str, sub_type: str | None = None) -> dict[str, Any]:
     """Parses the schema from partial schemas for given object type.
 
     Args:
-        object_type (str): Type of the object. Accepts "edge", "node", "circuit" and "simulation".
-        sub_type (str): Sub type of object. E.g., "biophysical".
+        object_type: Type of the object. Accepts "edge", "node", "circuit" and "simulation".
+        sub_type: Sub type of object. E.g., "biophysical".
 
     Returns:
-        dict: Schema parsed as a dictionary.
+        Schema parsed as a dictionary.
     """
     if object_type == "circuit":
         return _load_schema_file(object_type)
@@ -123,12 +135,13 @@ def _parse_schema(object_type, sub_type=None):
 
     schema = _load_schema_file(DEFINITIONS, "datatypes")
     schema.update(_load_schema_file(DEFINITIONS, object_type))
-    schema.update(_load_schema_file(object_type, sub_type))
+    # sub_type is always given for edges and nodes
+    schema.update(_load_schema_file(object_type, cast(str, sub_type)))
 
     return schema
 
 
-def _get_h5_structure_as_dict(h5):
+def _get_h5_structure_as_dict(h5: h5py.File | h5py.Group) -> dict[str, Any]:
     """Recursively translates h5 file into a dictionary.
 
     For groups, the subgroups/datasets are translated as a subdictionary.
@@ -136,14 +149,14 @@ def _get_h5_structure_as_dict(h5):
     Attributes of either groups or datasets are returned as {'attributes': {<key>: <value>}}.
 
     Args:
-        h5 (h5.File, h5.Group): h5 file or group to translate
+        h5: h5 file or group to translate
 
     Returns:
-        dict: dictionary of the structure
+        dictionary of the structure
     """
-    properties = {}
+    properties: dict[str, Any] = {}
 
-    def get_dataset_dtype(item):
+    def get_dataset_dtype(item: h5py.Dataset) -> str:
         if item.dtype.hasobject:
             return h5py.check_string_dtype(item.dtype).encoding
 
@@ -167,51 +180,60 @@ def _get_h5_structure_as_dict(h5):
     return properties
 
 
-def validate_simulation_schema(path, config, ignore_datatype_errors):
+def validate_simulation_schema(
+    path: str | os.PathLike[str], config: dict[str, Any], ignore_datatype_errors: bool
+) -> list[BluepySnapValidationError]:
     """Validates a simulation config against a schema.
 
     Args:
-        path (str): path to the config (for error messages)
-        config (dict): resolved bluepysnap config
-        ignore_datatype_errors (bool): Don't check if datatypes are correct
+        path: path to the config (for error messages)
+        config: resolved bluepysnap config
+        ignore_datatype_errors: Don't check if datatypes are correct
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     errors = _validate_schema_for_dict(_parse_schema("simulation"), config)
 
     return _wrap_errors(path, errors, ".", ignore_datatype_errors)
 
 
-def validate_circuit_schema(path, config, ignore_datatype_errors):
+def validate_circuit_schema(
+    path: str | os.PathLike[str], config: dict[str, Any], ignore_datatype_errors: bool
+) -> list[BluepySnapValidationError]:
     """Validates a circuit config against a schema.
 
     Args:
-        path (str): path to the config (for error messages)
-        config (dict): resolved bluepysnap config
-        ignore_datatype_errors (bool): Don't check if datatypes are correct
+        path: path to the config (for error messages)
+        config: resolved bluepysnap config
+        ignore_datatype_errors: Don't check if datatypes are correct
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     errors = _validate_schema_for_dict(_parse_schema("circuit"), config)
 
     return _wrap_errors(path, errors, ".", ignore_datatype_errors)
 
 
-def validate_nodes_schema(path, nodes_type, ignore_datatype_errors, population_name=None):
+def validate_nodes_schema(
+    path: str | os.PathLike[str],
+    nodes_type: str,
+    ignore_datatype_errors: bool,
+    population_name: str | None = None,
+) -> list[BluepySnapValidationError]:
     """Validates a nodes file against a schema.
 
     Args:
-        path (str): path to the nodes file
-        nodes_type (str): node type (e.g., "biophysical")
-        ignore_datatype_errors (bool): Don't check if datatypes are correct
-        population_name (str): if given, validate only this population against ``nodes_type``;
+        path: path to the nodes file
+        nodes_type: node type (e.g., "biophysical")
+        ignore_datatype_errors: Don't check if datatypes are correct
+        population_name: if given, validate only this population against ``nodes_type``;
             other populations in the file are left untouched. If ``None``, every population in
             the file is validated against ``nodes_type``.
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     with h5py.File(path) as h5:
         nodes_h5_dict = _get_h5_structure_as_dict(h5)
@@ -230,19 +252,23 @@ def validate_nodes_schema(path, nodes_type, ignore_datatype_errors, population_n
 
 
 def validate_edges_schema(
-    path, edges_type, virtual, ignore_datatype_errors, ignore_edge_properties
-):
+    path: str | os.PathLike[str],
+    edges_type: str,
+    virtual: bool,
+    ignore_datatype_errors: bool,
+    ignore_edge_properties: Iterable[str],
+) -> list[BluepySnapValidationError]:
     """Validates an edges file against a schema.
 
     Args:
-        path (str): path to the edges file
-        edges_type (str): edge type (e.g., "chemical")
-        virtual(bool): whether this is a virtual edge population
-        ignore_datatype_errors (bool): Don't check if datatypes are correct
-        ignore_edge_properties(Iterable[str]): Edge properties to ignore when validating
+        path: path to the edges file
+        edges_type: edge type (e.g., "chemical")
+        virtual: whether this is a virtual edge population
+        ignore_datatype_errors: Don't check if datatypes are correct
+        ignore_edge_properties: Edge properties to ignore when validating
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     if virtual:
         edges_type += "_virtual"
@@ -261,11 +287,11 @@ def validate_edges_schema(
     return _wrap_errors(path, errors, "/", ignore_datatype_errors)
 
 
-def _resolve_types(registry, types):
+def _resolve_types(registry: Registry, types: dict[str, Any]) -> dict[str, Any]:
     """Use jsonschema `registry` to resolve the `types` dict."""
-    cache = {}
+    cache: dict[str, Any] = {}
 
-    def _resolve_type(type_):
+    def _resolve_type(type_: str) -> Any:
         if type_ not in cache:
             resolved = registry.resolver().lookup(type_)
             if const := resolved.contents["properties"]["datatype"].get("const"):
@@ -281,21 +307,22 @@ def _resolve_types(registry, types):
     return {k: _resolve_type(v["$ref"]) for k, v in types.items()}
 
 
-def _get_jsonschema_registry(schema):
+def _get_jsonschema_registry(schema: dict[str, Any]) -> Registry:
     """Get registry for the given schema."""
     resource = Resource.from_contents(schema)
     registry = Registry().with_resource("", resource)
     return registry
 
 
-def nodes_schema_types(nodes_type):
+def nodes_schema_types(nodes_type: str) -> tuple[dict[str, Any], dict[str, Any]]:
     """Get the datatypes of the attributes for nodes.
 
     Args:
-        nodes_type (str): node type (e.g., "biophysical")
+        nodes_type: node type (e.g., "biophysical")
 
     Returns:
-        dict: name -> type of column
+        two dicts name -> type of column, for the attributes and for the
+        dynamics params
     """
     schema = _parse_schema("node", nodes_type)
     registry = _get_jsonschema_registry(schema)
@@ -309,15 +336,15 @@ def nodes_schema_types(nodes_type):
     return _resolve_types(registry, schema), _resolve_types(registry, dynamics_params)
 
 
-def edges_schema_types(edges_type, virtual):
+def edges_schema_types(edges_type: str, virtual: bool) -> dict[str, Any]:
     """Get the datatypes of the attributes for edges.
 
     Args:
-        edges_type (str): edges type (e.g., "chemical")
-        virtual(bool): whether this is a virtual edge population
+        edges_type: edges type (e.g., "chemical")
+        virtual: whether this is a virtual edge population
 
     Returns:
-        dict: name -> type of column
+        name -> type of column
     """
     if virtual:
         edges_type += "_virtual"

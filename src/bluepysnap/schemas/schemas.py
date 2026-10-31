@@ -12,6 +12,7 @@ import numpy as np
 import yaml
 from referencing import Registry, Resource
 
+from bluepysnap._typing import ValidationErrors
 from bluepysnap.exceptions import BluepySnapValidationError
 
 DEFINITIONS = "definitions"
@@ -44,7 +45,7 @@ def _wrap_errors(
     schema_errors: Iterable[jsonschema.ValidationError],
     join_str: str,
     ignore_datatype_errors: bool,
-) -> list[BluepySnapValidationError]:
+) -> ValidationErrors:
     """Handles parsing of schema errors into more meaningful messages.
 
     Also wraps all the warngings and errors to single Error instances.
@@ -182,7 +183,7 @@ def _get_h5_structure_as_dict(h5: h5py.File | h5py.Group) -> dict[str, Any]:
 
 def validate_simulation_schema(
     path: str | os.PathLike[str], config: dict[str, Any], ignore_datatype_errors: bool
-) -> list[BluepySnapValidationError]:
+) -> ValidationErrors:
     """Validates a simulation config against a schema.
 
     Args:
@@ -200,7 +201,7 @@ def validate_simulation_schema(
 
 def validate_circuit_schema(
     path: str | os.PathLike[str], config: dict[str, Any], ignore_datatype_errors: bool
-) -> list[BluepySnapValidationError]:
+) -> ValidationErrors:
     """Validates a circuit config against a schema.
 
     Args:
@@ -221,7 +222,7 @@ def validate_nodes_schema(
     nodes_type: str,
     ignore_datatype_errors: bool,
     population_name: str | None = None,
-) -> list[BluepySnapValidationError]:
+) -> ValidationErrors:
     """Validates a nodes file against a schema.
 
     Args:
@@ -257,7 +258,7 @@ def validate_edges_schema(
     virtual: bool,
     ignore_datatype_errors: bool,
     ignore_edge_properties: Iterable[str],
-) -> list[BluepySnapValidationError]:
+) -> ValidationErrors:
     """Validates an edges file against a schema.
 
     Args:

@@ -21,7 +21,7 @@ import builtins
 import inspect
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sized
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Literal, TypeAlias, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 import libsonata
 import numpy as np
@@ -30,7 +30,15 @@ import pandas as pd
 from more_itertools import first
 
 from bluepysnap import query, utils
-from bluepysnap._typing import EdgeGroup, IdsArray, NodeGroup, PropertyList
+from bluepysnap._typing import (
+    Connection,
+    ConnectionWithCount,
+    ConnectionWithEdgeIds,
+    EdgeGroup,
+    IdsArray,
+    NodeGroup,
+    PropertyList,
+)
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeId
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId
 from bluepysnap.edges.edge_population_stats import StatsHelper
@@ -40,13 +48,6 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Edge
 if TYPE_CHECKING:
     from bluepysnap.circuit import Circuit
     from bluepysnap.nodes.node_population import NodePopulation
-
-#: A connection yielded by iter_connections: source and target nodes.
-Connection: TypeAlias = tuple[CircuitNodeId, CircuitNodeId]
-#: A connection with the number of edges between the source and target nodes.
-ConnectionWithCount: TypeAlias = tuple[CircuitNodeId, CircuitNodeId, int]
-#: A connection with the ids of the edges between the source and target nodes.
-ConnectionWithEdgeIds: TypeAlias = tuple[CircuitNodeId, CircuitNodeId, CircuitEdgeIds]
 
 
 def _is_empty(xs: Sized | None) -> bool:

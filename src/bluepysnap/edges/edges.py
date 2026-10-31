@@ -24,14 +24,16 @@ import numpy as np
 import pandas as pd
 
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
-from bluepysnap._typing import EdgeGroup, NodeGroup, PropertyList
-from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
-from bluepysnap.edges.edge_population import (
+from bluepysnap._typing import (
     Connection,
     ConnectionWithCount,
     ConnectionWithEdgeIds,
-    EdgePopulation,
+    EdgeGroup,
+    NodeGroup,
+    PropertyList,
 )
+from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
+from bluepysnap.edges.edge_population import EdgePopulation
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
 

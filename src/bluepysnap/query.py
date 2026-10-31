@@ -19,9 +19,9 @@ if TYPE_CHECKING:
 
 # A boolean mask selecting the rows of a DataFrame. True and False select all or none of the rows.
 Mask: TypeAlias = bool | npt.NDArray[np.bool_]
-# A query, as described in the documentation of NodePopulation.ids: a dict from property names
+# A query, as described in the documentation of NodePopulation.ids: a mapping from property names
 # or special keys (e.g. ``$or``, ``$node_set``) to values.
-Queries: TypeAlias = dict[str, Any]
+Queries: TypeAlias = Mapping[str, Any]
 
 # this constant is not part of the sonata standard
 NODE_ID_KEY = "node_id"
@@ -190,7 +190,7 @@ def traverse_queries_bottom_up(
         traverse_fn(queries, key)
 
 
-def get_properties(queries: dict[str, Any]) -> set[str]:
+def get_properties(queries: Queries) -> set[str]:
     """Extracts properties names from `queries`.
 
     Args:
@@ -205,7 +205,8 @@ def get_properties(queries: dict[str, Any]) -> set[str]:
             props.add(query_key)
 
     props: set[str] = set()
-    traverse_queries_bottom_up(queries, _collect)
+    # traverse_queries_bottom_up accepts a dict, because it can modify it
+    traverse_queries_bottom_up(dict(queries), _collect)
     return props
 
 
@@ -237,7 +238,7 @@ def resolve_nodesets(
             )
             del queries[queries_key]
 
-    resolved_queries = deepcopy(queries)
+    resolved_queries = dict(deepcopy(queries))
     traverse_queries_bottom_up(resolved_queries, _resolve)
 
     return resolved_queries
@@ -276,7 +277,7 @@ def resolve_ids(
                 data, population_name, population_type, {queries_key: queries[queries_key]}
             )
 
-    queries = deepcopy(queries)
-    traverse_queries_bottom_up(queries, _collect)
-    result = _merge_queries_masks(queries)
+    resolved_queries = dict(deepcopy(queries))
+    traverse_queries_bottom_up(resolved_queries, _collect)
+    result = _merge_queries_masks(resolved_queries)
     return np.full(len(data), fill_value=result) if isinstance(result, bool) else result

@@ -17,17 +17,25 @@
 
 """Nodes access."""
 
+from collections.abc import Iterator
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
+import pandas as pd
 
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
+from bluepysnap._typing import NodeGroup, PropertyList
 from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
 from bluepysnap.nodes.node_population import NodePopulation
 
+if TYPE_CHECKING:
+    from bluepysnap.circuit import Circuit
+
 
 class Nodes(
-    NetworkObject,
+    NetworkObject[NodePopulation],
     metaclass=AbstractDocSubstitutionMeta,
     source_word="NetworkObject",
     target_word="Node",
@@ -36,16 +44,16 @@ class Nodes(
 
     _population_class = NodePopulation
 
-    def __init__(self, circuit):  # pylint: disable=useless-super-delegation
+    def __init__(self, circuit: "Circuit") -> None:  # pylint: disable=useless-super-delegation
         """Initialize the top level Nodes accessor."""
         super().__init__(circuit)
 
     @property
-    def population_names(self):
+    def population_names(self) -> list[str]:
         """Defines all sorted node population names from the Circuit."""
         return sorted(self._circuit.to_libsonata.node_populations)
 
-    def property_values(self, prop):
+    def property_values(self, prop: str) -> set[Any]:
         """Returns all the values for a given Nodes property."""
         return set(
             value
@@ -54,11 +62,13 @@ class Nodes(
             for value in pop.property_values(prop)
         )
 
-    def ids(self, group=None, sample=None, limit=None):
+    def ids(
+        self, group: NodeGroup = None, sample: int | None = None, limit: int | None = None
+    ) -> CircuitNodeIds:
         """Returns the CircuitNodeIds corresponding to the nodes from ``group``.
 
         Args:
-            group (CircuitNodeId/CircuitNodeIds/int/sequence/str/mapping/None): Which IDs will be
+            group: Which IDs will be
                 returned depends on the type of the ``group`` argument:
 
                 - ``CircuitNodeId``: return the ID in a CircuitNodeIds object if it belongs to
@@ -75,15 +85,15 @@ class Nodes(
                 - ``mapping``: Returns a CircuitNodeIds object containing nodes matching a
                   properties filter.
                 - ``None``: return all node IDs of the circuit in a CircuitNodeIds object.
-            sample (int): If specified, randomly choose ``sample`` number of
+            sample: If specified, randomly choose ``sample`` number of
                 IDs from the match result. If the size of the sample is greater than
                 the size of all the NodePopulations then all ids are taken and shuffled.
-            limit (int): If specified, return the first ``limit`` number of
+            limit: If specified, return the first ``limit`` number of
                 IDs from the match result. If limit is greater than the size of all the populations,
                 all node IDs are returned.
 
         Returns:
-            CircuitNodeIds: returns a CircuitNodeIds containing all the node IDs and the
+            returns a CircuitNodeIds containing all the node IDs and the
             corresponding populations. All the explicitly requested IDs must be present inside
             the circuit.
 
@@ -120,19 +130,21 @@ class Nodes(
         fun = lambda x: (x.ids(group, raise_missing_property=False), x.name)
         return self._get_ids_from_pop(fun, CircuitNodeIds, sample=sample, limit=limit)
 
-    def get(self, group=None, properties=None):  # pylint: disable=arguments-differ
+    def get(  # pylint: disable=arguments-differ
+        self, group: NodeGroup = None, properties: str | PropertyList | None = None
+    ) -> Iterator[tuple[str, pd.DataFrame]]:
         """Node properties by iterating populations.
 
         Args:
-            group (CircuitNodeIds/int/sequence/str/mapping/None): Which nodes will have their
+            group: Which nodes will have their
                 properties returned depends on the type of the ``group`` argument:
                 See :py:class:`~bluepysnap.nodes.Nodes.ids`.
 
-            properties (str/list): If specified, return only the properties in the list.
+            properties: If specified, return only the properties in the list.
                 Otherwise return all properties.
 
         Returns:
-            generator: yields tuples of ``(<population_name>, pandas.DataFrame)``:
+            yields tuples of ``(<population_name>, pandas.DataFrame)``:
                 - DataFrame indexed by CircuitNodeIds containing the properties from ``properties``.
 
         Notes:
@@ -144,10 +156,10 @@ class Nodes(
             properties = sorted(self.property_names)
         return super().get(group, properties)
 
-    def __getstate__(self):
+    def __getstate__(self) -> "Circuit":
         """Make Nodes pickle-able, without storing state of caches."""
         return self._circuit
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: "Circuit") -> None:
         """Load from pickle state."""
         self.__init__(state)

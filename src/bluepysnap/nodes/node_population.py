@@ -471,8 +471,8 @@ class NodePopulation:
 
     @overload
     def get(self, group: NodeId, properties: str, raise_missing_property: bool = True) -> Any: ...
-    # pyright reports a partial overlap between CircuitNodeId and Sequence[int], but a
-    # CircuitNodeId (a str and an int) can't be a sequence of ints
+    # pyright reports a partial overlap between CircuitNodeId and Sequence[int | np.integer],
+    # but a CircuitNodeId (a str and an int) can't be a sequence of ints
     @overload
     def get(  # pyright: ignore[reportOverlappingOverload]
         self,

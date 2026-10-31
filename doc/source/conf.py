@@ -6,7 +6,8 @@
 
 # -- Path setup --------------------------------------------------------------
 
-import importlib
+import importlib.metadata
+import re
 import subprocess
 
 # -- Project information -----------------------------------------------------
@@ -63,6 +64,9 @@ autodoc_default_options = {
 
 autoclass_content = "both"
 
+# show the type annotations in the parameter and return descriptions, not in the signatures
+autodoc_typehints = "description"
+
 autodoc_mock_imports = ["libsonata"]
 
 # autosummary settings
@@ -82,3 +86,22 @@ extlinks = {
         "Notebook: %s",
     )
 }
+
+
+# Sphinx shows typing.Self literally: replace it with the class that the method is documented on,
+# which is what Self means (e.g. CircuitNodeIds.filter_population returns a CircuitNodeIds).
+_SELF_RE = re.compile(r"(?<![\w.])~?(?:typing\.)?Self\b")
+
+
+def _replace_self_in_typehints(app, what, name, obj, options, signature, return_annotation):
+    annotations = app.env.current_document.autodoc_annotations.get(name)
+    if what == "method" and annotations:
+        class_name = "~" + name.rsplit(".", 1)[0]
+        for key, value in annotations.items():
+            annotations[key] = _SELF_RE.sub(class_name, value)
+
+
+def setup(app):
+    """Connect the event handlers."""
+    # run after sphinx.ext.autodoc.typehints, which records the type hints with priority 500
+    app.connect("autodoc-process-signature", _replace_self_in_typehints, priority=600)

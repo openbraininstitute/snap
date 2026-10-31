@@ -20,9 +20,10 @@ import abc
 import functools
 import inspect
 import types
+from typing import Any
 
 
-def _word_swapper(doc, source_word, target_word):
+def _word_swapper(doc: str | None, source_word: str | None, target_word: str | None) -> str | None:
     """Swap a word with another in a docstring."""
     if doc is None:
         return doc
@@ -31,7 +32,7 @@ def _word_swapper(doc, source_word, target_word):
     return doc.replace(source_word, target_word)
 
 
-def _copy_func(f):
+def _copy_func(f: types.FunctionType) -> types.FunctionType:
     """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)."""
     g = types.FunctionType(
         f.__code__, f.__globals__, name=f.__name__, argdefs=f.__defaults__, closure=f.__closure__
@@ -55,7 +56,14 @@ class DocSubstitutionMeta(type):
         It works well with Sphinx also.
     """
 
-    def __new__(mcs, name, parents, attrs, source_word=None, target_word=None):
+    def __new__(
+        mcs,
+        name: str,
+        parents: tuple[type, ...],
+        attrs: dict[str, Any],
+        source_word: str | None = None,
+        target_word: str | None = None,
+    ) -> "DocSubstitutionMeta":
         """Define the new class to return."""
         original_attrs = attrs.copy()
         for parent in parents:
@@ -63,11 +71,8 @@ class DocSubstitutionMeta(type):
             # classmethod docstring changed but then the cls argument is not automatically skipped.
             for fun_name, fun_value in inspect.getmembers(parent, predicate=inspect.isfunction):
                 # skip abstract methods. This is fine because we must override them anyway
-                try:
-                    if fun_name in parent.__abstractmethods__:
-                        continue
-                except AttributeError:
-                    pass
+                if fun_name in getattr(parent, "__abstractmethods__", ()):
+                    continue
                 # skip overrode functions
                 if fun_name in original_attrs:
                     continue

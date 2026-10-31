@@ -16,6 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Exceptions used throughout the library."""
 
+from typing import Self
+
 
 class BluepySnapError(Exception):
     """Base SNAP exception."""
@@ -36,52 +38,52 @@ class BluepySnapValidationError:
     WARNING = "WARNING"
     INFO = "INFO"
 
-    def __init__(self, level, message=None):
+    def __init__(self, level: str, message: str | None = None) -> None:
         """Error.
 
         Args:
-            level (str): error level
-            message (str|None): message
+            level: error level
+            message: message
         """
         self.level = level
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Returns only message by default."""
         return str(self.message)
 
     __repr__ = __str__
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Two errors are equal if inherit from Error and their level, message are equal."""
         if not isinstance(other, BluepySnapValidationError):
             return False
         return self.level == other.level and self.message == other.message
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Hash. Errors with the same level and message give the same hash."""
         return hash(self.level) ^ hash(self.message)
 
     @classmethod
-    def warning(cls, message):
+    def warning(cls, message: str) -> Self:
         """Shortcut for a warning.
 
         Args:
-            message (str): text message
+            message: text message
 
         Returns:
-            Error: Error with level WARNING
+            Error with level WARNING
         """
         return cls(cls.WARNING, message)
 
     @classmethod
-    def fatal(cls, message):
+    def fatal(cls, message: str) -> Self:
         """Shortcut for a fatal error.
 
         Args:
-            message (str): text message
+            message: text message
 
         Returns:
-            Error: Error with level FATAL
+            Error with level FATAL
         """
         return cls(cls.FATAL, message)

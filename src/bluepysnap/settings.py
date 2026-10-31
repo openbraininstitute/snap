@@ -20,10 +20,10 @@
 import os
 
 # All possible checks enabled / deprecated methods disallowed
-STRICT_MODE = False
+STRICT_MODE: bool = False
 
 
-def str2bool(value):
+def str2bool(value: str | None) -> bool:
     """Convert environment variable value to bool."""
     if value is None:
         return False
@@ -31,7 +31,7 @@ def str2bool(value):
         return value.lower() in ("y", "yes", "true", "1")
 
 
-def load_env():
+def load_env() -> None:
     """Load settings from environment variables."""
     # pylint: disable=global-statement
     if "BLUESNAP_STRICT_MODE" in os.environ:

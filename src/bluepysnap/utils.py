@@ -18,11 +18,14 @@
 """Miscellaneous utilities."""
 
 import json
+import os
 import warnings
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable, Sequence
+from typing import TYPE_CHECKING, Any, NoReturn, TypeAlias
 
 import click
 import numpy as np
+import numpy.typing as npt
 
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import (
@@ -33,42 +36,48 @@ from bluepysnap.exceptions import (
 )
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
 
+if TYPE_CHECKING:
+    import pandas as pd
+
+# 1D sequence of floats, as passed by NodePopulation.orientations
+_FloatArray: TypeAlias = "Sequence[float] | npt.NDArray[np.floating] | pd.Series"
+
 
 class Deprecate:
     """Class for the deprecations in BluepySnap."""
 
     @staticmethod
-    def fail(msg=""):
+    def fail(msg: str = "") -> NoReturn:
         """Raise a deprecation exception."""
         raise BluepySnapDeprecationError(msg)
 
     @staticmethod
-    def warn(msg=""):
+    def warn(msg: str = "") -> None:
         """Issue a deprecation warning."""
         warnings.warn(msg, BluepySnapDeprecationWarning, stacklevel=2)
 
 
-def load_json(filepath):
+def load_json(filepath: str | os.PathLike[str]) -> Any:
     """Load JSON from file."""
     with open(filepath, encoding="utf-8") as f:
         return json.load(f)
 
 
-def is_node_id(node_id):
+def is_node_id(node_id: object) -> bool:
     """Check if node_id can be a valid node id.
 
     Returns:
-        bool: true is node_id is a int, np.integer or CircuitNodeId. False for anything else.
+        True if node_id is an int, np.integer or CircuitNodeId. False for anything else.
     """
     return isinstance(node_id, (int, np.integer, CircuitNodeId))
 
 
-def is_iterable(v):
+def is_iterable(v: object) -> bool:
     """Check if `v` is any iterable (strings are considered scalar and CircuitNode/EdgeId also)."""
     return isinstance(v, Iterable) and not isinstance(v, (str, CircuitNodeId, CircuitEdgeId))
 
 
-def ensure_list(v):
+def ensure_list(v: Any) -> list[Any]:
     """Convert iterable / wrap scalar into list (strings are considered scalar)."""
     if is_iterable(v):
         return list(v)
@@ -76,7 +85,7 @@ def ensure_list(v):
         return [v]
 
 
-def ensure_ids(a):
+def ensure_ids(a: npt.ArrayLike) -> npt.NDArray[np.int64]:
     """Convert a numpy array dtype into IDS_DTYPE.
 
     This function is here due to the https://github.com/numpy/numpy/issues/15084 numpy issue.
@@ -89,18 +98,18 @@ def ensure_ids(a):
     return np.asarray(a, IDS_DTYPE)
 
 
-def add_dynamic_prefix(properties):
+def add_dynamic_prefix(properties: Iterable[str]) -> list[str]:
     """Add the dynamic prefix to a list of properties."""
     return [DYNAMICS_PREFIX + name for name in list(properties)]
 
 
-def euler2mat(az, ay, ax):
+def euler2mat(az: _FloatArray, ay: _FloatArray, ax: _FloatArray) -> list[npt.NDArray[np.float64]]:
     """Build 3x3 rotation matrices from az, ay, ax rotation angles (in that order).
 
     Args:
-        az: rotation angles around Z (Nx1 NumPy array; radians)
-        ay: rotation angles around Y (Nx1 NumPy array; radians)
-        ax: rotation angles around X (Nx1 NumPy array; radians)
+        az: rotation angles around Z (N angles; radians)
+        ay: rotation angles around Y (N angles; radians)
+        ax: rotation angles around X (N angles; radians)
 
     Returns:
         List with Nx3x3 rotation matrices corresponding to each of N angle triplets.
@@ -125,14 +134,16 @@ def euler2mat(az, ay, ax):
     return [mm[..., i] for i in range(len(az))]
 
 
-def quaternion2mat(aqw, aqx, aqy, aqz):
+def quaternion2mat(
+    aqw: _FloatArray, aqx: _FloatArray, aqy: _FloatArray, aqz: _FloatArray
+) -> list[npt.NDArray[np.float64]]:
     """Build 3x3 rotation matrices from quaternions.
 
     Args:
-        aqw: w component of quaternions (Nx1 NumPy array; float)
-        aqx: x component of quaternions (Nx1 NumPy array; float)
-        aqy: y component of quaternions (Nx1 NumPy array; float)
-        aqz: z component of quaternions (Nx1 NumPy array; float)
+        aqw: w component of quaternions (N floats)
+        aqx: x component of quaternions (N floats)
+        aqy: y component of quaternions (N floats)
+        aqz: z component of quaternions (N floats)
 
     Returns:
         List with Nx3x3 rotation matrices corresponding to each of N quaternions.
@@ -141,11 +152,11 @@ def quaternion2mat(aqw, aqx, aqy, aqz):
         https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
     """
 
-    def normalize_quaternions(qs):
+    def normalize_quaternions(qs: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Normalize a bunch of quaternions along axis==1.
 
         Args:
-            qs: quaternions (Nx4 NumPy array; float)
+            qs: quaternions (Nx4 array)
 
         Returns:
            numpy array of normalized quaternions
@@ -171,7 +182,7 @@ def quaternion2mat(aqw, aqx, aqy, aqz):
     return [mm[..., i] for i in range(len(aq))]
 
 
-def print_validation_errors(errors):
+def print_validation_errors(errors: Collection[BluepySnapValidationError]) -> None:
     """Some fancy errors printing."""
     colors = {
         BluepySnapValidationError.WARNING: "yellow",

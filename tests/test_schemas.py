@@ -6,7 +6,9 @@ import pytest
 from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 import bluepysnap.schemas.schemas as test_module
+from bluepysnap.config import Parser
 from bluepysnap.exceptions import BluepySnapValidationError
+from bluepysnap.utils import load_json
 
 
 @pytest.mark.parametrize(
@@ -133,8 +135,9 @@ def test__get_h5_structure_as_dict_library_entries(tmp_path):
 
 
 def test_validate_config_ok():
-    config = str(TEST_DATA_DIR / "circuit_config.json")
-    res = test_module.validate_circuit_schema("fake_path", config, ignore_datatype_errors=False)
+    path = TEST_DATA_DIR / "circuit_config.json"
+    config = Parser.parse(load_json(path), str(path.parent))
+    res = test_module.validate_circuit_schema(path, config, ignore_datatype_errors=False)
 
     assert len(res) == 0
 
@@ -261,7 +264,7 @@ def test_validate_nodes_biophysical_missing_required(missing):
             str(nodes_file), "biophysical", ignore_datatype_errors=False
         )
         assert len(errors) == 1
-        assert f"'{missing.split('/')[-1]}' is a required property" in errors[0].message
+        assert f"'{missing.split('/')[-1]}' is a required property" in str(errors[0])
 
 
 @pytest.mark.parametrize(
@@ -308,7 +311,7 @@ def test_validate_edges_chemical_missing_required(missing):
             ignore_edge_properties=(),
         )
         assert len(errors) == 1
-        assert f"'{missing.split('/')[-1]}' is a required property" in errors[0].message
+        assert f"'{missing.split('/')[-1]}' is a required property" in str(errors[0])
 
         rest, *prop = missing.rsplit("/", maxsplit=1)
         if prop and rest.endswith("0"):
@@ -433,7 +436,7 @@ def test_mixed_model_type_node_populations_malformed_still_fails():
             population_name="default",
         )
         assert len(errors) == 1
-        assert "'orientation_w' is a required property" in errors[0].message
+        assert "'orientation_w' is a required property" in str(errors[0])
 
 
 def test_virtual_edge_population_ok():
@@ -466,7 +469,7 @@ def test_virtual_edge_population_error():
             ignore_edge_properties=(),
         )
         assert len(errors) == 1
-        assert "'afferent_center_x' is a required property" in errors[0].message
+        assert "'afferent_center_x' is a required property" in str(errors[0])
 
 
 def test_virtual_node_population_ok():
@@ -503,7 +506,7 @@ def test_virtual_node_population_error():
             str(nodes_file), "virtual", ignore_datatype_errors=False
         )
         assert len(errors) == 1
-        assert "'model_type' is a required property" in errors[0].message
+        assert "'model_type' is a required property" in str(errors[0])
 
 
 def test_validate_edges_missing_attributes_field():
@@ -520,7 +523,7 @@ def test_validate_edges_missing_attributes_field():
             ignore_edge_properties=(),
         )
         assert len(errors) == 1
-        assert "missing required attribute(s) ['node_population']" in errors[0].message
+        assert "missing required attribute(s) ['node_population']" in str(errors[0])
 
 
 def test_validate_edges_missing_attribute():
@@ -538,7 +541,7 @@ def test_validate_edges_missing_attribute():
             ignore_edge_properties=(),
         )
         assert len(errors) == 1
-        assert "missing required attribute(s) ['node_population']" in errors[0].message
+        assert "missing required attribute(s) ['node_population']" in str(errors[0])
 
 
 @pytest.mark.parametrize(
@@ -565,7 +568,7 @@ def test_wrong_datatype(field):
         )
         assert len(errors) == 1
         assert errors[0].level == BluepySnapValidationError.WARNING
-        assert f"incorrect datatype 'uint16' for '{field}'" in errors[0].message
+        assert f"incorrect datatype 'uint16' for '{field}'" in str(errors[0])
 
 
 def test_nodes_schema_types():

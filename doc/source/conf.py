@@ -9,6 +9,10 @@
 import importlib.metadata
 import re
 import subprocess
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
 
 # -- Project information -----------------------------------------------------
 
@@ -93,7 +97,15 @@ extlinks = {
 _SELF_RE = re.compile(r"(?<![\w.])~?(?:typing\.)?Self\b")
 
 
-def _replace_self_in_typehints(app, what, name, obj, options, signature, return_annotation):
+def _replace_self_in_typehints(
+    app: "Sphinx",
+    what: str,
+    name: str,
+    obj: Any,
+    options: Any,
+    signature: str | None,
+    return_annotation: str | None,
+) -> None:
     annotations = app.env.current_document.autodoc_annotations.get(name)
     if what == "method" and annotations:
         class_name = "~" + name.rsplit(".", 1)[0]
@@ -101,7 +113,7 @@ def _replace_self_in_typehints(app, what, name, obj, options, signature, return_
             annotations[key] = _SELF_RE.sub(class_name, value)
 
 
-def setup(app):
+def setup(app: "Sphinx") -> None:
     """Connect the event handlers."""
     # run after sphinx.ext.autodoc.typehints, which records the type hints with priority 500
     app.connect("autodoc-process-signature", _replace_self_in_typehints, priority=600)

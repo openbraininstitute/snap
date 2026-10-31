@@ -403,7 +403,7 @@ class NodePopulation:
 
     def ids(
         self,
-        group: NodeGroup | NodeSet = None,
+        group: NodeGroup = None,
         limit: int | None = None,
         sample: int | None = None,
         raise_missing_property: bool = True,

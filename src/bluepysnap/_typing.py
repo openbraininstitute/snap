@@ -12,6 +12,7 @@ import numpy.typing as npt
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
 from bluepysnap.circuit_ids_types import CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapValidationError
+from bluepysnap.node_sets import NodeSet
 
 #: A single node: a node id, or a node id with its population.
 NodeId: TypeAlias = int | np.integer | CircuitNodeId
@@ -24,6 +25,7 @@ MultiNodeGroup: TypeAlias = (
     | Sequence[CircuitNodeId]
     | npt.NDArray[np.integer]
     | str
+    | NodeSet
     | Mapping[str, Any]
     | None
 )
@@ -48,6 +50,8 @@ EdgeGroup: TypeAlias = (
 
 #: A list of property names. A single property name is a plain ``str``.
 #: Tuples are not included because pandas interprets a tuple as a single column label.
+#: Used by the populations, which pass the properties to pandas. ``Nodes`` and ``Edges``
+#: accept any ``Collection[str]`` instead, because they convert it to a list first.
 PropertyList: TypeAlias = list[str] | npt.NDArray[np.str_]
 
 #: Array of node or edge ids, always of dtype ``IDS_DTYPE``.

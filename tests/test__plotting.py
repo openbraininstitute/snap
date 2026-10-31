@@ -33,7 +33,7 @@ def _get_filtered_frame_report():
 
 def test_spikes_firing_rate_histogram():
     with pytest.raises(BluepySnapError, match="Invalid time_binsize"):
-        test_module.spikes_firing_rate_histogram(filtered_report=None, time_binsize=0)
+        test_module.spikes_firing_rate_histogram(filtered_report=None, time_binsize=0)  # ty: ignore[invalid-argument-type]
 
     filtered_report = _get_filtered_spike_report()
     ax = test_module.spikes_firing_rate_histogram(filtered_report)
@@ -75,7 +75,7 @@ def test_spike_raster():
 
 def test_spikes_isi():
     with pytest.raises(BluepySnapError, match="Invalid binsize"):
-        test_module.spikes_isi(filtered_report=None, binsize=0)
+        test_module.spikes_isi(filtered_report=None, binsize=0)  # ty: ignore[invalid-argument-type]
 
     filtered_report = _get_filtered_spike_report()
 
@@ -100,10 +100,10 @@ def test_spikes_isi():
 
 def test_spikes_firing_animation(tmp_path):
     with pytest.raises(BluepySnapError, match="Fake is not a valid axis"):
-        test_module.spikes_firing_animation(filtered_report=None, x_axis="Fake")
+        test_module.spikes_firing_animation(filtered_report=None, x_axis="Fake")  # ty: ignore[invalid-argument-type]
 
     with pytest.raises(BluepySnapError, match="Fake is not a valid axis"):
-        test_module.spikes_firing_animation(filtered_report=None, y_axis="Fake")
+        test_module.spikes_firing_animation(filtered_report=None, y_axis="Fake")  # ty: ignore[invalid-argument-type]
 
     filtered_report = _get_filtered_spike_report()
     anim, ax = test_module.spikes_firing_animation(filtered_report, dt=0.2)
@@ -128,7 +128,7 @@ def test_spikes_firing_animation(tmp_path):
 
 def test_frame_trace():
     with pytest.raises(BluepySnapError, match="Unknown plot_type Fake."):
-        test_module.frame_trace(filtered_report=None, plot_type="Fake", ax="also fake")
+        test_module.frame_trace(filtered_report=None, plot_type="Fake", ax="also fake")  # ty: ignore[invalid-argument-type]
 
     filtered_report = _get_filtered_frame_report()
     test_module.frame_trace(filtered_report)

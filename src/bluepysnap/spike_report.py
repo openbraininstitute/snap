@@ -33,7 +33,7 @@ from bluepysnap.circuit_ids_types import IDS_DTYPE
 from bluepysnap.exceptions import BluepySnapError
 
 if TYPE_CHECKING:
-    from bluepysnap.node_sets import NodeSet, NodeSets
+    from bluepysnap.node_sets import NodeSets
     from bluepysnap.nodes.node_population import NodePopulation
     from bluepysnap.simulation import Simulation
 
@@ -97,9 +97,7 @@ class PopulationSpikeReport:
         """Return the NodePopulation corresponding to this spike report."""
         return self.spike_report.simulation.circuit.nodes[self._population_name]
 
-    def resolve_nodes(
-        self, group: "NodeGroup | NodeSet", raise_missing_property: bool = True
-    ) -> IdsArray:
+    def resolve_nodes(self, group: NodeGroup, raise_missing_property: bool = True) -> IdsArray:
         """Transform a node group into a node_id array."""
         if isinstance(group, str):
             group = self._node_sets[group]

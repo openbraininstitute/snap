@@ -168,7 +168,7 @@ class TestEdgePopulation:
                 "syn_weight": np.float32,
                 "u_syn": np.float32,
             }
-        ).apply(np.dtype)
+        ).map(np.dtype)
         pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
 
     def test_ids(self):
@@ -518,6 +518,17 @@ class TestEdgePopulation:
     def test_pathway_edges_5(self):
         with pytest.raises(BluepySnapError):
             self.test_obj.pathway_edges(None, None, None)
+
+    def test_pathway_edges_properties_ndarray(self):
+        # a truthiness test on a numpy array with more than one item would raise
+        properties = [Synapse.AXONAL_DELAY, Synapse.SOURCE_NODE_ID]
+        expected = self.test_obj.pathway_edges([0, 1], [1, 2], properties)
+        tested = self.test_obj.pathway_edges([0, 1], [1, 2], np.array(properties))
+        pdt.assert_frame_equal(tested, expected)
+
+        expected = self.test_obj.pathway_edges([0, 1], [1, 2])
+        tested = self.test_obj.pathway_edges([0, 1], [1, 2], np.array([], dtype=str))
+        npt.assert_equal(tested, expected)
 
     def test_pathway_edges_6(self):
         ids = CircuitNodeIds.from_dict({"default": [0, 1]})

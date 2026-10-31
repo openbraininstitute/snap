@@ -137,7 +137,7 @@ class TestEdges:
 
         with pytest.raises(BluepySnapError):
             ids = [CircuitEdgeId("default", 0), ("default", 1)]
-            self.test_obj.ids(ids)
+            self.test_obj.ids(ids)  # ty: ignore[invalid-argument-type]
 
         # Check operations on global ids
         ids = self.test_obj.ids([0, 1, 2, 3])
@@ -465,6 +465,13 @@ class TestEdges:
         # without the properties should return the CircuitEdgeIds
         assert self.test_obj.pathway_edges(source, target) == expected_index
         assert self.test_obj.pathway_edges(source, target, None) == expected_index
+
+        # properties as a numpy array with more than one item
+        tested = self.test_obj.pathway_edges(source, target, np.array(properties))
+        pdt.assert_frame_equal(
+            pd.concat(df for _, df in tested),
+            pd.concat(df for _, df in self.test_obj.pathway_edges(source, target, properties)),
+        )
 
         # without the properties and the target
         assert self.test_obj.pathway_edges(source, None) == CircuitEdgeIds.from_dict(

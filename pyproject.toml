@@ -54,6 +54,7 @@ target-version = "py311"
 [tool.ruff.lint]
 select = [
     "A", # flake8-builtins
+    "ANN", # flake8-annotations
     "B", # bugbear
     "D", # pydocstyle
     "E", # pycodestyle
@@ -63,6 +64,7 @@ select = [
     "UP", # pyupgrade
 ]
 ignore = [
+    "ANN401", # allow `typing.Any`, used where the type is dynamic or comes from untyped libraries
     "S101", # allow `assert`
     "E731", # Do not assign a `lambda` expression, use a `def`
     "E741", # Ambiguous variable name: `l`
@@ -88,6 +90,7 @@ convention = "google"
     "E501",    # Line too long
 ]
 "doc/source/notebooks/*.ipynb" = [
+    "ANN",  # Missing type annotation
     "E501", # Line too long
     "B905", # `zip()` without an explicit `strict=` parameter
     "D103", # Missing docstring in public function
@@ -127,9 +130,21 @@ skip-magic-trailing-comma = false
 [tool.ty.environment]
 python-version = "3.11"
 
+[tool.ty.src]
+include = ["src", "tests"]
+
+[tool.ty.terminal]
+# already the default in ty 0.0.95, set explicitly because ty is in beta and defaults may change
+error-on-warning = true
+
 [tool.ty.analysis]
-# optional runtime dependency, only detected via import (requires NEURON), not installed for type checking
-allowed-unresolved-imports = ["neurodamus", "neurodamus.**"]
+allowed-unresolved-imports = [
+    # optional runtime dependency, only detected via import (requires NEURON), not installed for type checking
+    "neurodamus",
+    "neurodamus.**",
+    # compiled private module of libsonata, imported by the tests
+    "libsonata._libsonata",
+]
 
 [tool.coverage.run]
 source_pkgs = ["bluepysnap"]

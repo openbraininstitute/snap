@@ -19,7 +19,7 @@
 
 import builtins
 import inspect
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sized
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence, Sized
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Literal, overload
 
@@ -55,7 +55,9 @@ def _is_empty(xs: Sized | None) -> bool:
 
 
 def _estimate_range_size(
-    func: Callable[[Any], libsonata.Selection], node_ids: npt.NDArray[np.integer], n: int = 3
+    func: Callable[[Any], libsonata.Selection],
+    node_ids: Sequence[int] | npt.NDArray[np.integer],
+    n: int = 3,
 ) -> np.floating:
     """Median size of index second level for some node IDs from the provided list."""
     assert len(node_ids) > 0
@@ -481,7 +483,8 @@ class EdgePopulation:
         else:
             selection = self.to_libsonata.connecting_edges(source_node_ids, target_edge_ids)
 
-        if properties:
+        # len instead of a truthiness test, which raises for numpy arrays with more than one item
+        if properties is not None and len(properties) > 0:
             return self._get(selection, properties)
         return utils.ensure_ids(selection.flatten())
 

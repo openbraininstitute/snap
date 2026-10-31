@@ -103,7 +103,7 @@ class TestNodePopulation:
                 "y": np.float32,
                 "z": np.float32,
             }
-        ).apply(np.dtype)
+        ).map(np.dtype)
 
         pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
 
@@ -152,10 +152,10 @@ class TestNodePopulation:
 
         with pytest.raises(BluepySnapError):
             mapping = {"X": "x"}
-            self.test_obj.container_property_names(mapping)
+            self.test_obj.container_property_names(mapping)  # ty: ignore[invalid-argument-type]
 
         with pytest.raises(BluepySnapError):
-            self.test_obj.container_property_names(int)
+            self.test_obj.container_property_names(int)  # ty: ignore[invalid-argument-type]
 
     def test_as_edge_source_target(self):
         circuit = Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
@@ -313,7 +313,7 @@ class TestNodePopulation:
         with pytest.raises(BluepySnapError):
             _call({"$node_set": "no-such-node-set"})
         with pytest.raises(BluepySnapError):
-            _call([CircuitNodeId("default", 1), CircuitNodeId("default2", 1), ("default2", 1)])
+            _call([CircuitNodeId("default", 1), CircuitNodeId("default2", 1), ("default2", 1)])  # ty: ignore[invalid-argument-type]
 
     def test_node_ids_by_filter_complex_query(self):
         test_obj = create_node_population(

@@ -17,7 +17,7 @@
 """Plotting module for the different snap objects."""
 
 import logging
-from typing import TypedDict
+from typing import TYPE_CHECKING, Any, Literal, TypedDict, cast
 
 import numpy as np
 import pandas as pd
@@ -27,18 +27,26 @@ from bluepysnap.circuit_ids_types import IDS_DTYPE
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
 
+if TYPE_CHECKING:
+    from matplotlib.animation import FuncAnimation
+    from matplotlib.axes import Axes
+
+    from bluepysnap.frame_report import FilteredFrameReport
+    from bluepysnap.spike_report import FilteredSpikeReport
+
 L = logging.getLogger(__name__)
 
 
 class _RasterProperties(TypedDict):
     node_id_offset: int
     pop_separators: list[int]
-    categorical_values: set
+    categorical_values: set[Any]
     ymin: float
     ymax: float
 
 
-def _get_pyplot():
+def _get_pyplot() -> Any:
+    """Return the matplotlib.pyplot module, imported only when needed."""
     try:
         import matplotlib.pyplot as plt
     except ImportError as e:
@@ -50,19 +58,23 @@ def _get_pyplot():
     return plt
 
 
-def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):
+def spikes_firing_rate_histogram(
+    filtered_report: "FilteredSpikeReport",
+    time_binsize: float | None = None,
+    ax: "Axes | None" = None,
+) -> "Axes":
     """Spike firing rate histogram.
 
     This plot shows the number of nodes firing during a range of time.
 
     Args:
         filtered_report: a `Filtered*Report`
-        time_binsize(None/int/float): bin size (milliseconds). If None, a binning heuristic is used
+        time_binsize: bin size (milliseconds). If None, a binning heuristic is used
             to create an histogram with ~100 spikes per bin in average.
-        ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
+        ax: matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
 
     Returns:
-        matplotlib.Axis: Axis containing firing rate histogram.
+        Axis containing firing rate histogram.
 
     Notes:
         If no axis is provided through the ax=ax keyword argument,
@@ -99,7 +111,9 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):
     return ax
 
 
-def spike_raster(filtered_report, y_axis=None, ax=None):
+def spike_raster(
+    filtered_report: "FilteredSpikeReport", y_axis: str | None = None, ax: "Axes | None" = None
+) -> "Axes":
     """Spike raster plot.
 
     Shows a global overview of the circuit's firing nodes. The y axis can project either the
@@ -107,11 +121,11 @@ def spike_raster(filtered_report, y_axis=None, ax=None):
 
     Args:
         filtered_report: a `Filtered*Report`
-        y_axis (None/str): The property to display on the y axis. None is node_ids.
-        ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
+        y_axis: The property to display on the y axis. None is node_ids.
+        ax: matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
 
     Returns:
-        matplotlib.Axis: Axis containing Spikes raster plot.
+        Axis containing Spikes raster plot.
 
     Notes:
         If no axis is provided through the ax=ax keyword argument,
@@ -131,10 +145,10 @@ def spike_raster(filtered_report, y_axis=None, ax=None):
         "ymax": -np.inf,
     }
 
-    def _is_categorical_or_object(dtype):
+    def _is_categorical_or_object(dtype: Any) -> bool:
         return pd.api.types.is_object_dtype(dtype) or isinstance(dtype, pd.CategoricalDtype)
 
-    def _update_raster_properties():
+    def _update_raster_properties() -> None:
         if y_axis is None:
             props["node_id_offset"] += spikes.nodes.size
             props["pop_separators"].append(props["node_id_offset"])
@@ -196,7 +210,12 @@ def spike_raster(filtered_report, y_axis=None, ax=None):
     return ax
 
 
-def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):
+def spikes_isi(
+    filtered_report: "FilteredSpikeReport",
+    use_frequency: bool = False,
+    binsize: float | None = None,
+    ax: "Axes | None" = None,
+) -> "Axes":
     # pylint: disable=too-many-locals
     """Interspike interval histogram.
 
@@ -204,13 +223,13 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):
 
     Args:
         filtered_report: a `Filtered*Report`
-        use_frequency(bool): use inverse interspike interval times (Hz)
-        binsize(None/int/float): bin size in milliseconds or Hz. If None is used the binning is
+        use_frequency: use inverse interspike interval times (Hz)
+        binsize: bin size in milliseconds or Hz. If None is used the binning is
             delegated to matplolib and is done automatically.
-        ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
+        ax: matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
 
     Returns:
-        matplotlib.Axis: axis containing the interspike interval histogram.
+        axis containing the interspike interval histogram.
 
     Notes:
         If no axis is provided through the ax=ax keyword argument,
@@ -246,11 +265,18 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):
             ax.set_xlabel("Interspike interval [ms]")
         ax.set_ylabel("Bin weight")
 
-    ax.hist(values, bins=bins, edgecolor="black", density=True)
+    # matplotlib's annotations don't include numpy arrays for bins, matplotlib accepts them
+    ax.hist(values, bins=bins, edgecolor="black", density=True)  # ty: ignore[invalid-argument-type]
     return ax
 
 
-def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y, dt=20, ax=None):
+def spikes_firing_animation(
+    filtered_report: "FilteredSpikeReport",
+    x_axis: str = Node.X,
+    y_axis: str = Node.Y,
+    dt: float = 20,
+    ax: "Axes | None" = None,
+) -> "tuple[FuncAnimation, Axes]":
     # pylint: disable=too-many-locals,too-many-arguments,anomalous-backslash-in-string
     """Simple animation of simulation spikes.
 
@@ -259,15 +285,14 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y, dt=20
 
     Args:
         filtered_report: a `Filtered*Report`
-        x_axis (str): Node enum that will determine the animation x_axis
-        y_axis (str): Node enum that will determine the animation y_axis
-        dt (int) : the time bin size of each frame in the video in ms
-        ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca()
+        x_axis: Node enum that will determine the animation x_axis
+        y_axis: Node enum that will determine the animation y_axis
+        dt: the time bin size of each frame in the video in ms
+        ax: matplotlib Axis to draw on (if not specified, pyplot.gca()
             and plt.figure() are used).
 
     Returns:
-        (matplotlib.animation.FuncAnimation, matplotlib.Axis): the matplotlib animation object and
-        the corresponding axis.
+        the matplotlib animation object and the corresponding axis.
 
     Examples:
         From scripts:
@@ -290,7 +315,7 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y, dt=20
     plt = _get_pyplot()
     from matplotlib.animation import FuncAnimation
 
-    def _check_axis(axis):
+    def _check_axis(axis: str) -> None:
         """Verifies axes values."""
         axes = {Node.X, Node.Y, Node.Z}
         if axis not in axes:
@@ -334,7 +359,7 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y, dt=20
 
     dots = ax.plot([], [], ".k")
 
-    def update_animation(frame):
+    def update_animation(frame: int) -> Any:
         """Update the animation plots and axes."""
         ax.set_title("time = " + str(frame * dt) + " ms")
         mask = (data.index >= frame * dt) & (data.index <= (frame + 1) * dt)
@@ -345,21 +370,26 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y, dt=20
         return dots
 
     frames = list(range(int(data.index[0] / dt), int(data.index[-1] / dt)))
-    anim = FuncAnimation(fig, update_animation, frames=frames)
+    # ax.figure can be a SubFigure, which matplotlib's annotations don't accept here
+    anim = FuncAnimation(fig, update_animation, frames=frames)  # ty: ignore[invalid-argument-type]
     return anim, ax
 
 
-def frame_trace(filtered_report, plot_type="mean", ax=None):
+def frame_trace(
+    filtered_report: "FilteredFrameReport",
+    plot_type: Literal["mean", "all"] = "mean",
+    ax: "Axes | None" = None,
+) -> "Axes":
     """Returns a plot displaying the voltage of a node or a compartment as a function of time.
 
     Args:
         filtered_report: a `Filtered*Report`
-        plot_type (str): string either `all` or `mean`. `all` will plot the first 15 traces from the
+        plot_type: string either `all` or `mean`. `all` will plot the first 15 traces from the
             group. `mean` will plot the mean value of the node
         ax: A plot axis object that will be updated
 
     Returns:
-        matplotlib.Axis: axis containing the soma's traces.
+        axis containing the soma's traces.
     """
     # pylint: disable=too-many-locals
 
@@ -379,7 +409,8 @@ def frame_trace(filtered_report, plot_type="mean", ax=None):
         ax.plot(filtered_report.report.T.mean())
     elif plot_type == "all":
         max_per_pop = 15
-        levels = filtered_report.report.columns.levels
+        # the columns of a frame report are always a MultiIndex
+        levels = cast(pd.MultiIndex, filtered_report.report.columns).levels
         slicer = []
         # create a slicer that will slice only on the last level of the columns
         # that is, node_id for the soma report, element_id for the compartment report

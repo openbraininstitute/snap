@@ -16,6 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Simulation input access."""
 
+from typing import Any
+
 import libsonata
 
 from bluepysnap.exceptions import BluepySnapError
@@ -24,40 +26,40 @@ from bluepysnap.exceptions import BluepySnapError
 class SynapseReplay:
     """Wrapper class for libsonata.SynapseReplay to provide the reader as a property."""
 
-    def __init__(self, instance):
+    def __init__(self, instance: Any) -> None:
         """Wrap libsonata SynapseReplay object.
 
         Args:
-            instance (libsonata.SynapseReplay): instance to wrap
+            instance: the libsonata SynapseReplay instance to wrap
         """
         self._instance = instance
 
-    def __dir__(self):
+    def __dir__(self) -> list[str]:
         """Provide wrapped SynapseReplay instance's public attributes in dir."""
         public_attrs_instance = {attr for attr in dir(self._instance) if not attr.startswith("_")}
         return list(set(super().__dir__()) | public_attrs_instance)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         """Retrieve attributes from the wrapped object."""
         return getattr(self._instance, name)
 
     @property
-    def reader(self):
+    def reader(self) -> libsonata.SpikeReader:
         """Return a spike reader object for the instance."""
         return libsonata.SpikeReader(self.spike_file)
 
 
-def get_simulation_inputs(simulation):
+def get_simulation_inputs(simulation: libsonata.SimulationConfig) -> dict[str, Any]:
     """Get simulation inputs as a dictionary.
 
     Args:
-        simulation (libsonata.SimulationConfig): libsonata Simulation instance
+        simulation: libsonata Simulation instance
 
     Returns:
-        dict: inputs with input names as keys and corresponding objects as values
+        inputs with input names as keys and corresponding objects as values
     """
 
-    def _get_input(name):
+    def _get_input(name: str) -> Any:
         """Helper function to wrap certain objects."""
         item = simulation.input(name)
 

@@ -12,7 +12,7 @@ CLICK_EXISTING_FILE = click.Path(exists=True, file_okay=True, dir_okay=False)
 @click.group()
 @click.version_option()
 @click.option("-v", "--verbose", count=True)
-def cli(verbose):
+def cli(verbose: int) -> None:
     """The CLI object."""
     logging.basicConfig(
         level=(logging.WARNING, logging.INFO, logging.DEBUG)[min(verbose, 2)],
@@ -37,14 +37,16 @@ def cli(verbose):
     is_flag=True,
     help="Ignore errors related to mismatch of datatypes: ie: float64 used instead of float32",
 )
-def validate_circuit(config_file, skip_slow, only_errors, ignore_datatype_errors):
+def validate_circuit(
+    config_file: str, skip_slow: bool, only_errors: bool, ignore_datatype_errors: bool
+) -> None:
     """Validate Sonata circuit based on config file.
 
     Args:
-        config_file (str): path to Sonata circuit config file
-        skip_slow (bool): skip slow tests
-        only_errors (bool): only print fatal errors
-        ignore_datatype_errors (bool): ignore checks related to datatypes
+        config_file: path to Sonata circuit config file
+        skip_slow: skip slow tests
+        only_errors: only print fatal errors
+        ignore_datatype_errors: ignore checks related to datatypes
     """
     circuit_validation.validate(
         config_file, skip_slow, only_errors, ignore_datatype_errors=ignore_datatype_errors
@@ -58,11 +60,11 @@ def validate_circuit(config_file, skip_slow, only_errors, ignore_datatype_errors
     is_flag=True,
     help="Ignore errors related to mismatch of datatypes: ie: float64 used instead of float32",
 )
-def validate_simulation(config_file, ignore_datatype_errors):
+def validate_simulation(config_file: str, ignore_datatype_errors: bool) -> None:
     """Validate Sonata simulation based on config file.
 
     Args:
-        config_file (str): path to Sonata simulation config file
-        ignore_datatype_errors (bool): ignore checks related to datatypes
+        config_file: path to Sonata simulation config file
+        ignore_datatype_errors: ignore checks related to datatypes
     """
     simulation_validation.validate(config_file, ignore_datatype_errors=ignore_datatype_errors)

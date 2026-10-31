@@ -4,14 +4,19 @@ The idea here is to not depend on libsonata if possible, so we can use this in a
 """
 
 import logging
+import os
+from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 import h5py
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from bluepysnap import schemas
+from bluepysnap._typing import ValidationErrors
 from bluepysnap.config import Parser
 from bluepysnap.exceptions import BluepySnapValidationError
 from bluepysnap.morph_constants import EXTENSIONS_MAPPING
@@ -23,25 +28,25 @@ MAX_MISSING_FILES_DISPLAY = 10
 
 
 @contextmanager
-def _np_printoptions():
+def _np_printoptions() -> Generator[None]:
     """Get numpy print options."""
     with np.printoptions(legacy=("1.25" if np.version.version >= "2.0.0" else None)):
         yield
 
 
-def _check_partial_circuit_config(config):
+def _check_partial_circuit_config(config: Mapping[str, Any]) -> bool:
     return config.get("metadata", {}).get("status") == "partial"
 
 
-def _check_components_dir(name, components):
+def _check_components_dir(name: str, components: Mapping[str, Any]) -> ValidationErrors:
     """Checks existence of directory within Sonata config 'components'.
 
     Args:
-        name (str): components directory name
-        components (dict): ref to config's components
+        name: components directory name
+        components: ref to config's components
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     dirpath = components.get(name)
     if not dirpath or not Path(dirpath).is_dir():
@@ -49,16 +54,15 @@ def _check_components_dir(name, components):
     return []
 
 
-def _check_files(name, files):
+def _check_files(name: str, files: Iterable[Path]) -> ValidationErrors:
     """Checks for existence of files within an h5 group.
 
     Args:
-        name (str): h5 group name
-        files (Iterable): files to check for existence
-        level (str): level of generated errors for missing files
+        name: h5 group name
+        files: files to check for existence
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     files = set(files)
     missing = []
@@ -81,9 +85,9 @@ def _check_files(name, files):
     return []
 
 
-def _check_duplicate_populations(networks, key):
+def _check_duplicate_populations(networks: Mapping[str, Any], key: str) -> ValidationErrors:
     """Check that that for key = nodes|edges, no duplicate populations names exists."""
-    seen = set()
+    seen: set[str] = set()
     errors = []
     for network in networks.get(key, {}):
         for population in network.get("populations", {}):
@@ -98,15 +102,17 @@ def _check_duplicate_populations(networks, key):
     return errors
 
 
-def _find_nodes_population(node_population_name, nodes):
+def _find_nodes_population(
+    node_population_name: str, nodes: Iterable[dict[str, Any]]
+) -> dict[str, Any] | None:
     """Finds node population item in config.
 
     Args:
-        node_population_name (str): name of node population
-        nodes (list): "nodes" part of the resolved bluepysnap config
+        node_population_name: name of node population
+        nodes: "nodes" part of the resolved bluepysnap config
 
     Returns:
-        dict/None: A dict item of "nodes" of the resolved bluepysnap config.
+        A dict item of "nodes" of the resolved bluepysnap config.
         None if it finds nothing.
     """
     for nodes_dict in nodes:
@@ -116,23 +122,23 @@ def _find_nodes_population(node_population_name, nodes):
     return None
 
 
-def _get_group_name(group, parents=0):
+def _get_group_name(group: h5py.Group, parents: int = 0) -> Path:
     """Gets group name of h5 group.
 
     Args:
-        group (h5py.Group): nodes group in nodes .h5 file
-        parents (int): number of extra parents needed
+        group: nodes group in nodes .h5 file
+        parents: number of extra parents needed
     """
     return Path(*Path(group.name).parts[-(parents + 1) :])
 
 
-def _get_model_template_file(model_template):
+def _get_model_template_file(model_template: str) -> str:
     """Resolves 'model_template' field of nodes group to a proper filename."""
     parts = model_template.split(":", 1)
     return parts[1] + "." + parts[0]
 
 
-def _nodes_group_to_dataframe(group, population):
+def _nodes_group_to_dataframe(group: h5py.Group, population: h5py.Group) -> pd.DataFrame:
     """Transforms hdf5 population group to pandas DataFrame.
 
     Args:
@@ -140,7 +146,7 @@ def _nodes_group_to_dataframe(group, population):
         population: HDF5 nodes population
 
     Returns:
-        pd.DataFrame: dataframe with all group attributes
+        dataframe with all group attributes
     """
     # TODO: remove multi-indexing (BBP only supports group '0')
     df = pd.DataFrame(population["node_type_id"][:], columns=["type_id"])
@@ -169,17 +175,19 @@ def _nodes_group_to_dataframe(group, population):
     return df
 
 
-def _check_bio_nodes_group(group_df, group, population, population_name):
+def _check_bio_nodes_group(
+    group_df: pd.DataFrame, group: h5py.Group, population: dict[str, Any], population_name: str
+) -> ValidationErrors:
     """Checks biophysical nodes group for errors.
 
     Args:
-        group_df (pd.DataFrame): nodes group as a dataframe
-        group (h5py.Group): nodes group in nodes .h5 file
-        population (dict): a merged dictionary (current population and 'components' in config)
-        population_name (str): name of the population
+        group_df: nodes group as a dataframe
+        group: nodes group in nodes .h5 file
+        population: a merged dictionary (current population and 'components' in config)
+        population_name: name of the population
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     L.debug("Check biophysical nodes group")
 
@@ -187,7 +195,7 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
 
     group_name = _get_group_name(group, parents=1)
 
-    morph_dirs = set()
+    morph_dirs: set[tuple[str, str]] = set()
     if "morphologies_dir" in population:
         dir_errors = _check_components_dir("morphologies_dir", population)
         errors += dir_errors
@@ -272,17 +280,19 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
     return errors
 
 
-def _check_nodes_group(group_df, group, population, population_name):
+def _check_nodes_group(
+    group_df: pd.DataFrame, group: h5py.Group, population: dict[str, Any], population_name: str
+) -> ValidationErrors:
     """Validates nodes group in nodes population.
 
     Args:
-        group_df (pd.DataFrame): nodes group in nodes .h5 file
-        group (h5py.Group): nodes group in nodes .h5 file
-        population (dict): the node population config merged with the components config
-        population_name (str): the name of the population
+        group_df: nodes group in nodes .h5 file
+        group: nodes group in nodes .h5 file
+        population: the node population config merged with the components config
+        population_name: the name of the population
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     L.debug("Check nodes group: %s", group.name)
 
@@ -302,16 +312,18 @@ def _check_nodes_group(group_df, group, population, population_name):
     return errors
 
 
-def validate_node_population(nodes_file, population_dict, name: str):
+def validate_node_population(
+    nodes_file: str | os.PathLike[str], population_dict: dict[str, Any], name: str
+) -> ValidationErrors:
     """Validates nodes population.
 
     Args:
-        nodes_file (str): path to the nodes file (.h5)
-        population_dict (dict): the node population config merged with the components config
+        nodes_file: path to the nodes file (.h5)
+        population_dict: the node population config merged with the components config
         name: population name
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     with h5py.File(nodes_file, "r") as h5f:
         if "nodes" not in h5f or len(h5f["nodes"]) == 0:
@@ -334,15 +346,15 @@ def validate_node_population(nodes_file, population_dict, name: str):
     return []
 
 
-def _get_node_ids(nodes_h5, population_name):
+def _get_node_ids(nodes_h5: h5py.File, population_name: str) -> npt.NDArray[Any]:
     """Gets node ids of node population.
 
     Args:
-        nodes_h5: (h5py.File): nodes file h5 instance
-        population_name (str): node population name
+        nodes_h5: nodes file h5 instance
+        population_name: node population name
 
     Returns:
-        np.ndarray: Numpy array of node ids, empty if couldn't find any
+        Numpy array of node ids, empty if couldn't find any
     """
     if f"nodes/{population_name}" in nodes_h5:
         node_population = nodes_h5["nodes"][population_name]
@@ -356,15 +368,17 @@ def _get_node_ids(nodes_h5, population_name):
     return np.empty(0)
 
 
-def _check_edges_node_ids(nodes_ds, nodes):
+def _check_edges_node_ids(
+    nodes_ds: h5py.Dataset, nodes: Iterable[dict[str, Any]]
+) -> ValidationErrors:
     """Checks that nodes ids in edges can be resolved to nodes ids in nodes populations.
 
     Args:
-        nodes_ds (h5py.Dataset): nodes dataset in edges population
-        nodes (list): "nodes" part of the resolved bluepysnap config
+        nodes_ds: nodes dataset in edges population
+        nodes: "nodes" part of the resolved bluepysnap config
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     L.debug("Check edges node ids: %s", nodes_ds.name)
 
@@ -402,18 +416,18 @@ def _check_edges_node_ids(nodes_ds, nodes):
     return errors
 
 
-def _check_edges_indices(population):
+def _check_edges_indices(population: h5py.Group) -> ValidationErrors:
     """Check edges population indices.
 
     Args:
-        population (h5py.Group): edges population
+        population: edges population
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     L.debug("Check edges indices: %s", population.name)
 
-    def _check(indices, nodes_ds):
+    def _check(indices: h5py.Group, nodes_ds: h5py.Dataset) -> None:
         """The main indices check.
 
         It iterates over edge indices and verifies that each has its
@@ -463,15 +477,17 @@ def _check_edges_indices(population):
     return errors
 
 
-def _check_edge_population_data(population, nodes):
+def _check_edge_population_data(
+    population: h5py.Group, nodes: Iterable[dict[str, Any]]
+) -> ValidationErrors:
     """Check edges population data.
 
     Args:
-        population (h5py.Group): edges population
-        nodes (list): "nodes" part of the resolved bluepysnap config
+        population: edges population
+        nodes: "nodes" part of the resolved bluepysnap config
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     L.debug("Check edges population data")
 
@@ -493,16 +509,18 @@ def _check_edge_population_data(population, nodes):
     return errors
 
 
-def validate_edge_population(edges_file, name, nodes):
+def validate_edge_population(
+    edges_file: str | os.PathLike[str], name: str, nodes: Iterable[dict[str, Any]]
+) -> ValidationErrors:
     """Validate an edge population.
 
     Args:
-        edges_file (str): path to the edges file
-        name (str): name of the population
-        nodes (list): "nodes" listing of the config
+        edges_file: path to the edges file
+        name: name of the population
+        nodes: "nodes" listing of the config
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     with h5py.File(edges_file, "r") as h5f:
         if "edges" not in h5f or len(h5f["edges"]) == 0:
@@ -523,23 +541,29 @@ def validate_edge_population(edges_file, name, nodes):
 
 
 def validate_edges_dict(
-    edges_dict, nodes, skip_slow, ignore_datatype_errors, ignore_edge_properties
-):
+    edges_dict: dict[str, Any],
+    nodes: Iterable[dict[str, Any]],
+    skip_slow: bool,
+    ignore_datatype_errors: bool,
+    ignore_edge_properties: Iterable[str],
+) -> ValidationErrors:
     """Validate an item in the "edges" list.
 
     Args:
-        edges_dict (dict): edges population, represented by an item of "edges" in ``config``
-        nodes (list): "nodes" part of the resolved bluepysnap config
-        skip_slow(bool): skip slow tests
-        ignore_datatype_errors(bool): Don't check if datatypes are correct
-        ignore_edge_properties(Iterable[str]): Edge properties to ignore when validating
+        edges_dict: edges population, represented by an item of "edges" in ``config``
+        nodes: "nodes" part of the resolved bluepysnap config
+        skip_slow: skip slow tests
+        ignore_datatype_errors: Don't check if datatypes are correct
+        ignore_edge_properties: Edge properties to ignore when validating
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     errors = []
 
-    def _is_source_node_virtual(edges_dict, edge_population, nodes):
+    def _is_source_node_virtual(
+        edges_dict: dict[str, Any], edge_population: str, nodes: Iterable[dict[str, Any]]
+    ) -> bool:
         """Check if source node is virtual.
 
         The required attributes are different for edges with virtual source nodes.
@@ -574,16 +598,18 @@ def validate_edges_dict(
     return errors
 
 
-def validate_nodes_dict(nodes_dict, components, ignore_datatype_errors):
+def validate_nodes_dict(
+    nodes_dict: dict[str, Any], components: dict[str, Any], ignore_datatype_errors: bool
+) -> ValidationErrors:
     """Validate an item in the "nodes" list.
 
     Args:
-        nodes_dict (dict): nodes population, represented by an item of "nodes" in ``config``
-        components(dict): "components" part of the ``config``
-        ignore_datatype_errors(bool): Don't check if datatypes are correct
+        nodes_dict: nodes population, represented by an item of "nodes" in ``config``
+        components: "components" part of the ``config``
+        ignore_datatype_errors: Don't check if datatypes are correct
 
     Returns:
-        list: List of errors, empty if no errors
+        List of errors, empty if no errors
     """
     errors = []
     for pop_name, pop_dict in nodes_dict.get("populations", {}).items():
@@ -605,7 +631,12 @@ def validate_nodes_dict(nodes_dict, components, ignore_datatype_errors):
     return errors
 
 
-def validate_networks(config, skip_slow, ignore_datatype_errors, ignore_edge_properties):
+def validate_networks(
+    config: dict[str, Any],
+    skip_slow: bool,
+    ignore_datatype_errors: bool,
+    ignore_edge_properties: Iterable[str],
+) -> ValidationErrors:
     """Validate "networks" part of the config.
 
     Acts as a starting point of validation.
@@ -634,25 +665,25 @@ def validate_networks(config, skip_slow, ignore_datatype_errors, ignore_edge_pro
 
 
 def validate(
-    config_file,
-    skip_slow,
-    only_errors=False,
-    print_errors=True,
-    ignore_datatype_errors=False,
-    ignore_edge_properties=(),
-):
+    config_file: str | os.PathLike[str],
+    skip_slow: bool,
+    only_errors: bool = False,
+    print_errors: bool = True,
+    ignore_datatype_errors: bool = False,
+    ignore_edge_properties: Iterable[str] = (),
+) -> set[BluepySnapValidationError]:
     """Validates Sonata circuit.
 
     Args:
-        config_file (str): path to Sonata circuit config file official checks.
-        skip_slow (bool): skip slow tests
-        only_errors (bool): only return/print fatal errors
-        print_errors (bool): print errors
-        ignore_datatype_errors(bool): Don't check if datatypes are correct
-        ignore_edge_properties(Iterable[str]): Edge properties to ignore when validating
+        config_file: path to Sonata circuit config file official checks.
+        skip_slow: skip slow tests
+        only_errors: only return/print fatal errors
+        print_errors: print errors
+        ignore_datatype_errors: Don't check if datatypes are correct
+        ignore_edge_properties: Edge properties to ignore when validating
 
     Returns:
-        set: set of errors, empty if no errors
+        set of errors, empty if no errors
     """
     config = Parser.parse(load_json(config_file), str(Path(config_file).parent))
     errors = schemas.validate_circuit_schema(config_file, config, ignore_datatype_errors)

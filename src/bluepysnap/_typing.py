@@ -11,6 +11,7 @@ import numpy.typing as npt
 
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
 from bluepysnap.circuit_ids_types import CircuitEdgeId, CircuitNodeId
+from bluepysnap.exceptions import BluepySnapValidationError
 
 #: A single node: a node id, or a node id with its population.
 NodeId: TypeAlias = int | np.integer | CircuitNodeId
@@ -60,3 +61,6 @@ ConnectionWithCount: TypeAlias = tuple[CircuitNodeId, CircuitNodeId, int]
 
 #: A connection with the ids of the edges between the source and target nodes.
 ConnectionWithEdgeIds: TypeAlias = tuple[CircuitNodeId, CircuitNodeId, CircuitEdgeIds]
+
+#: The errors collected by the circuit and simulation validation.
+ValidationErrors: TypeAlias = list[BluepySnapValidationError]

@@ -33,7 +33,7 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import ensure_ids
 
 if TYPE_CHECKING:
-    from bluepysnap.node_sets import NodeSet, NodeSets
+    from bluepysnap.node_sets import NodeSets
     from bluepysnap.nodes.node_population import NodePopulation
     from bluepysnap.simulation import Simulation
 
@@ -79,9 +79,7 @@ class PopulationFrameReport:
         """Access to the population name."""
         return self._population_name
 
-    def resolve_nodes(
-        self, group: "NodeGroup | NodeSet", raise_missing_property: bool = True
-    ) -> IdsArray:
+    def resolve_nodes(self, group: NodeGroup, raise_missing_property: bool = True) -> IdsArray:
         """Transform a group into ids array.
 
         Notes:
@@ -337,9 +335,7 @@ class PopulationCompartmentReport(PopulationFrameReport):
         """Returns the NodePopulation corresponding to this report."""
         return self.frame_report.simulation.circuit.nodes[self._population_name]
 
-    def resolve_nodes(
-        self, group: "NodeGroup | NodeSet", raise_missing_property: bool = True
-    ) -> IdsArray:
+    def resolve_nodes(self, group: NodeGroup, raise_missing_property: bool = True) -> IdsArray:
         """Transform a group into a node_id array."""
         if isinstance(group, str):
             group = self._node_sets[group]

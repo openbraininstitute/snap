@@ -77,7 +77,7 @@ class TestNodeSets:
         with pytest.raises(
             BluepySnapError, match=re.escape("Unexpected type: 'str' (expected: 'NodeSets')")
         ):
-            tested.update("")
+            tested.update("")  # ty: ignore[invalid-argument-type]
 
     def test_contains(self):
         assert "Layer23" in self.test_obj

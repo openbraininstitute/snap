@@ -17,14 +17,14 @@
 
 """Nodes access."""
 
-from collections.abc import Iterator
+from collections.abc import Collection, Iterator
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
 
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
-from bluepysnap._typing import NodeGroup, PropertyList
+from bluepysnap._typing import NodeGroup
 from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
@@ -131,7 +131,7 @@ class Nodes(
         return self._get_ids_from_pop(fun, CircuitNodeIds, sample=sample, limit=limit)
 
     def get(  # pylint: disable=arguments-differ
-        self, group: NodeGroup = None, properties: str | PropertyList | None = None
+        self, group: NodeGroup = None, properties: str | Collection[str] | None = None
     ) -> Iterator[tuple[str, pd.DataFrame]]:
         """Node properties by iterating populations.
 

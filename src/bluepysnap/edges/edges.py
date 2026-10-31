@@ -17,7 +17,7 @@
 
 """Edges access."""
 
-from collections.abc import Iterator
+from collections.abc import Collection, Iterator
 from typing import TYPE_CHECKING, Literal, overload
 
 import numpy as np
@@ -30,7 +30,6 @@ from bluepysnap._typing import (
     ConnectionWithEdgeIds,
     EdgeGroup,
     NodeGroup,
-    PropertyList,
 )
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
 from bluepysnap.edges.edge_population import EdgePopulation
@@ -102,17 +101,17 @@ class Edges(
     def get(self, edge_ids: EdgeGroup = None, properties: None = None) -> CircuitEdgeIds: ...
     @overload
     def get(
-        self, edge_ids: EdgeGroup, properties: str | PropertyList
+        self, edge_ids: EdgeGroup, properties: str | Collection[str]
     ) -> Iterator[tuple[str, pd.DataFrame]]: ...
     @overload
     def get(
-        self, edge_ids: EdgeGroup = None, *, properties: str | PropertyList
+        self, edge_ids: EdgeGroup = None, *, properties: str | Collection[str]
     ) -> Iterator[tuple[str, pd.DataFrame]]: ...
     # the parameter is renamed on purpose, to document that only edge ids are accepted,
     # and the return type depends on properties, so the override is reported as incompatible.
     # A bare "type: ignore" is used because it's honored by both ty and pyright.
     def get(  # type: ignore
-        self, edge_ids: EdgeGroup = None, properties: str | PropertyList | None = None
+        self, edge_ids: EdgeGroup = None, properties: str | Collection[str] | None = None
     ) -> CircuitEdgeIds | Iterator[tuple[str, pd.DataFrame]]:
         """Edge properties by iterating populations.
 
@@ -187,17 +186,21 @@ class Edges(
     ) -> CircuitEdgeIds: ...
     @overload
     def pathway_edges(
-        self, source: NodeGroup, target: NodeGroup, properties: str | PropertyList
+        self, source: NodeGroup, target: NodeGroup, properties: str | Collection[str]
     ) -> Iterator[tuple[str, pd.DataFrame]]: ...
     @overload
     def pathway_edges(
-        self, source: NodeGroup = None, target: NodeGroup = None, *, properties: str | PropertyList
+        self,
+        source: NodeGroup = None,
+        target: NodeGroup = None,
+        *,
+        properties: str | Collection[str],
     ) -> Iterator[tuple[str, pd.DataFrame]]: ...
     def pathway_edges(
         self,
         source: NodeGroup = None,
         target: NodeGroup = None,
-        properties: str | PropertyList | None = None,
+        properties: str | Collection[str] | None = None,
     ) -> CircuitEdgeIds | Iterator[tuple[str, pd.DataFrame]]:
         """Get edges corresponding to ``source`` -> ``target`` connections.
 
@@ -213,7 +216,7 @@ class Edges(
         return self._pathway_edges(source, target, properties)
 
     def _pathway_edges(
-        self, source: NodeGroup, target: NodeGroup, properties: str | PropertyList | None
+        self, source: NodeGroup, target: NodeGroup, properties: str | Collection[str] | None
     ) -> CircuitEdgeIds | Iterator[tuple[str, pd.DataFrame]]:
         """Implementation of pathway_edges, without the overloads.
 
@@ -230,7 +233,8 @@ class Edges(
             lambda x: (x.pathway_edges(source_ids, target_ids), x.name), CircuitEdgeIds
         )
 
-        if properties:
+        # len instead of a truthiness test, which raises for numpy arrays with more than one item
+        if properties is not None and len(properties) > 0:
             return self.get(result, properties)
         return result
 
@@ -238,10 +242,10 @@ class Edges(
     def afferent_edges(self, node_id: NodeGroup, properties: None = None) -> CircuitEdgeIds: ...
     @overload
     def afferent_edges(
-        self, node_id: NodeGroup, properties: str | PropertyList
+        self, node_id: NodeGroup, properties: str | Collection[str]
     ) -> Iterator[tuple[str, pd.DataFrame]]: ...
     def afferent_edges(
-        self, node_id: NodeGroup, properties: str | PropertyList | None = None
+        self, node_id: NodeGroup, properties: str | Collection[str] | None = None
     ) -> CircuitEdgeIds | Iterator[tuple[str, pd.DataFrame]]:
         """Get afferent edges for given ``node_id``.
 
@@ -259,10 +263,10 @@ class Edges(
     def efferent_edges(self, node_id: NodeGroup, properties: None = None) -> CircuitEdgeIds: ...
     @overload
     def efferent_edges(
-        self, node_id: NodeGroup, properties: str | PropertyList
+        self, node_id: NodeGroup, properties: str | Collection[str]
     ) -> Iterator[tuple[str, pd.DataFrame]]: ...
     def efferent_edges(
-        self, node_id: NodeGroup, properties: str | PropertyList | None = None
+        self, node_id: NodeGroup, properties: str | Collection[str] | None = None
     ) -> CircuitEdgeIds | Iterator[tuple[str, pd.DataFrame]]:
         """Get efferent edges for given ``node_id``.
 
@@ -282,13 +286,16 @@ class Edges(
     ) -> CircuitEdgeIds: ...
     @overload
     def pair_edges(
-        self, source_node_id: NodeGroup, target_node_id: NodeGroup, properties: str | PropertyList
+        self,
+        source_node_id: NodeGroup,
+        target_node_id: NodeGroup,
+        properties: str | Collection[str],
     ) -> Iterator[tuple[str, pd.DataFrame]]: ...
     def pair_edges(
         self,
         source_node_id: NodeGroup,
         target_node_id: NodeGroup,
-        properties: str | PropertyList | None = None,
+        properties: str | Collection[str] | None = None,
     ) -> CircuitEdgeIds | Iterator[tuple[str, pd.DataFrame]]:
         """Get edges corresponding to ``source_node_id`` -> ``target_node_id`` connection.
 

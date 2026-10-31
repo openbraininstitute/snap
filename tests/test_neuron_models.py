@@ -37,7 +37,7 @@ def test_get_invalid_node_id():
     test_obj = test_module.NeuronModelsHelper(nodes._properties, nodes)
 
     with pytest.raises(BluepySnapError) as e:
-        test_obj.get_filepath("1")
+        test_obj.get_filepath("1")  # ty: ignore[invalid-argument-type]
     assert "node_id must be a int or a CircuitNodeId" in e.value.args[0]
 
 

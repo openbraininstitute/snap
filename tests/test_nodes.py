@@ -134,7 +134,7 @@ class TestNodes:
 
         with pytest.raises(BluepySnapError):
             ids = [CircuitNodeId("default", 0), ("default", 1)]
-            self.test_obj.ids(ids)
+            self.test_obj.ids(ids)  # ty: ignore[invalid-argument-type]
 
         # seq node ID --> CircuitNodeIds raise if on ID is not in all populations
         with pytest.raises(BluepySnapError):

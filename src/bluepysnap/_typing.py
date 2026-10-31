@@ -12,6 +12,7 @@ import numpy.typing as npt
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
 from bluepysnap.circuit_ids_types import CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapValidationError
+from bluepysnap.node_sets import NodeSet
 
 #: A single node: a node id, or a node id with its population.
 NodeId: TypeAlias = int | np.integer | CircuitNodeId
@@ -24,6 +25,7 @@ MultiNodeGroup: TypeAlias = (
     | Sequence[CircuitNodeId]
     | npt.NDArray[np.integer]
     | str
+    | NodeSet
     | Mapping[str, Any]
     | None
 )

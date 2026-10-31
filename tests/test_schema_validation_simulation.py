@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -8,9 +9,9 @@ import bluepysnap.schemas.schemas as test_module
 CONFIG_FILE = "fake_simulation.json"
 SCHEMA = test_module._parse_schema("simulation")
 
-MINIMUM_MANDATORY = {"run": {"tstop": 0.1, "dt": 0.1, "random_seed": 1}}
+MINIMUM_MANDATORY: dict[str, Any] = {"run": {"tstop": 0.1, "dt": 0.1, "random_seed": 1}}
 
-MANDATORY_FOR_OPTIONALS = {
+MANDATORY_FOR_OPTIONALS: dict[str, Any] = {
     **MINIMUM_MANDATORY,
     "conditions": {
         "modifications": {

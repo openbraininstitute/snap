@@ -80,10 +80,10 @@ class TestMorphHelper:
         assert actual == expected
 
         with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
-            self.test_obj.get_filepath([CircuitNodeId("default", 0), CircuitNodeId("default", 1)])
+            self.test_obj.get_filepath([CircuitNodeId("default", 0), CircuitNodeId("default", 1)])  # ty: ignore[invalid-argument-type]
 
         with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
-            self.test_obj.get_filepath([0, 1])
+            self.test_obj.get_filepath([0, 1])  # ty: ignore[invalid-argument-type]
 
     def test_alternate_morphology(self):
         alternate_morphs = {"h5v1": str(self.morph_path)}
@@ -123,7 +123,7 @@ class TestMorphHelper:
         npt.assert_almost_equal([2.0, 2.0], actual.diameters[:2])
 
         with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
-            self.test_obj.get([0, 1])
+            self.test_obj.get([0, 1])  # ty: ignore[invalid-argument-type]
 
     def test_get_alternate_morphology_collection(self):
         morph_path = TEST_DATA_DIR / "morphologies/container-morphs.h5"

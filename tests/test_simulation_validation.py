@@ -361,19 +361,19 @@ def test__get_missing_ids():
 @patch.object(test_module, "_get_missing_ids")
 def test__compare_ids(mock_missing_ids):
     mock_missing_ids.return_value = []
-    assert test_module._compare_ids(None, None, None, None) == []
+    assert test_module._compare_ids(None, None, None, None) == []  # ty: ignore[invalid-argument-type]
 
     source = "fake_superset"
     prefix = "fake_prefix"
     mock_missing_ids.return_value = [0, 1]
     msg = f"{prefix}: 2 id(s) not found in {source}: 0, 1"
     expected = [BluepySnapValidationError.fatal(msg)]
-    assert test_module._compare_ids(None, None, source, prefix) == expected
+    assert test_module._compare_ids(None, None, source, prefix) == expected  # ty: ignore[invalid-argument-type]
 
     mock_missing_ids.return_value = [*range(15)]
     msg = f"{prefix}: 15 id(s) not found in {source}: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ..."
     expected = [BluepySnapValidationError.fatal(msg)]
-    assert test_module._compare_ids(None, None, source, prefix) == expected
+    assert test_module._compare_ids(None, None, source, prefix) == expected  # ty: ignore[invalid-argument-type]
 
 
 @patch.object(test_module, "_get_ids_from_spike_file")
@@ -843,13 +843,16 @@ def test_validate_run(mock_validate_file):
 @patch.dict(test_module.VALIDATORS)
 def test_validate_config_unittest():
     config = {"not_validated_key": "ignored_value"}
+    mocks = []
     for idx, config_key in enumerate(sorted(test_module.VALIDATORS)):
-        test_module.VALIDATORS[config_key] = Mock(return_value=[idx])
+        mock = Mock(return_value=[idx])
+        test_module.VALIDATORS[config_key] = mock
+        mocks.append(mock)
         config[config_key] = None
 
     assert test_module.validate_config(config) == [*range(9)]
 
-    for mock in test_module.VALIDATORS.values():
+    for mock in mocks:
         mock.assert_called_once_with(config)
         mock.reset_mock()
 
@@ -858,7 +861,7 @@ def test_validate_config_unittest():
 
     assert test_module.validate_config(config) == [*range(9)]
 
-    for mock in test_module.VALIDATORS.values():
+    for mock in mocks:
         mock.assert_called_once_with(config)
 
 

@@ -17,7 +17,7 @@
 
 """CircuitIds types."""
 
-from collections import namedtuple
+from typing import NamedTuple
 
 import numpy as np
 
@@ -26,5 +26,16 @@ import numpy as np
 # all returned node or edge ids.
 IDS_DTYPE = np.int64
 
-CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
-CircuitEdgeId = namedtuple("CircuitEdgeId", ("population", "id"))
+
+class CircuitNodeId(NamedTuple):
+    """Global node id: population name and node id inside the population."""
+
+    population: str
+    id: int
+
+
+class CircuitEdgeId(NamedTuple):
+    """Global edge id: population name and edge id inside the population."""
+
+    population: str
+    id: int

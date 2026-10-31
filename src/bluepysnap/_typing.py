@@ -51,3 +51,12 @@ PropertyList: TypeAlias = list[str] | npt.NDArray[np.str_]
 
 #: Array of node or edge ids, always of dtype ``IDS_DTYPE``.
 IdsArray: TypeAlias = npt.NDArray[np.int64]
+
+#: A connection yielded by ``iter_connections``: source and target nodes.
+Connection: TypeAlias = tuple[CircuitNodeId, CircuitNodeId]
+
+#: A connection with the number of edges between the source and target nodes.
+ConnectionWithCount: TypeAlias = tuple[CircuitNodeId, CircuitNodeId, int]
+
+#: A connection with the ids of the edges between the source and target nodes.
+ConnectionWithEdgeIds: TypeAlias = tuple[CircuitNodeId, CircuitNodeId, CircuitEdgeIds]

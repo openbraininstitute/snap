@@ -1,18 +1,31 @@
 """EdgePopulation stats helper."""
 
-import numpy as np
+from typing import TYPE_CHECKING, Literal
 
+import numpy as np
+import numpy.typing as npt
+
+from bluepysnap._typing import NodeGroup
 from bluepysnap.exceptions import BluepySnapError
+
+if TYPE_CHECKING:
+    from bluepysnap.edges.edge_population import EdgePopulation
 
 
 class StatsHelper:
     """EdgePopulation stats helper."""
 
-    def __init__(self, edge_population):
+    def __init__(self, edge_population: "EdgePopulation") -> None:
         """Initialize StatsHelper with an EdgePopulation instance."""
         self._edge_population = edge_population
 
-    def divergence(self, source, target, by, sample=None):
+    def divergence(
+        self,
+        source: NodeGroup,
+        target: NodeGroup,
+        by: Literal["synapses", "connections"],
+        sample: int | None = None,
+    ) -> npt.NDArray[np.int64]:
         """`source` -> `target` divergence.
 
         Calculate the divergence based on number of `"connections"` or `"synapses"` each `source`
@@ -22,10 +35,10 @@ class StatsHelper:
         * `synapses`: number of unique synapses between a source cell and its target cells
 
         Args:
-            source (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): source nodes
-            target (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): target nodes
-            by (str): 'synapses' or 'connections'
-            sample (int): if specified, sample size for source group
+            source: source nodes
+            target: target nodes
+            by: 'synapses' or 'connections'
+            sample: if specified, sample size for source group
 
         Returns:
             Array with synapse / connection count per each cell from `source` sample
@@ -51,7 +64,13 @@ class StatsHelper:
 
         return np.array(list(result.values()))
 
-    def convergence(self, source, target, by=None, sample=None):
+    def convergence(
+        self,
+        source: NodeGroup,
+        target: NodeGroup,
+        by: Literal["synapses", "connections"] | None = None,
+        sample: int | None = None,
+    ) -> npt.NDArray[np.int64]:
         """`source` -> `target` convergence.
 
         Calculate the convergence based on number of `"connections"` or `"synapses"` each `target`
@@ -61,10 +80,10 @@ class StatsHelper:
         * `synapses`: number of unique synapses between a target cell and its source cells
 
         Args:
-            source (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): source nodes
-            target (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): target nodes
-            by (str): 'synapses' or 'connections'
-            sample (int): if specified, sample size for target group
+            source: source nodes
+            target: target nodes
+            by: 'synapses' or 'connections'
+            sample: if specified, sample size for target group
 
         Returns:
             Array with synapse / connection count per each cell from `target` sample

@@ -50,6 +50,8 @@ EdgeGroup: TypeAlias = (
 
 #: A list of property names. A single property name is a plain ``str``.
 #: Tuples are not included because pandas interprets a tuple as a single column label.
+#: Used by the populations, which pass the properties to pandas. ``Nodes`` and ``Edges``
+#: accept any ``Collection[str]`` instead, because they convert it to a list first.
 PropertyList: TypeAlias = list[str] | npt.NDArray[np.str_]
 
 #: Array of node or edge ids, always of dtype ``IDS_DTYPE``.

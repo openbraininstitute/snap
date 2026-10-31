@@ -130,6 +130,13 @@ skip-magic-trailing-comma = false
 [tool.ty.environment]
 python-version = "3.11"
 
+[tool.ty.src]
+include = ["src", "tests"]
+
+[tool.ty.terminal]
+# already the default in ty 0.0.95, set explicitly because ty is in beta and defaults may change
+error-on-warning = true
+
 [tool.ty.analysis]
 allowed-unresolved-imports = [
     # optional runtime dependency, only detected via import (requires NEURON), not installed for type checking

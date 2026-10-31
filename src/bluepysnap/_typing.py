@@ -15,11 +15,10 @@ from bluepysnap.circuit_ids_types import CircuitEdgeId, CircuitNodeId
 #: A single node: a node id, or a node id with its population.
 NodeId: TypeAlias = int | np.integer | CircuitNodeId
 
-#: The ``group`` argument used to select nodes, see the Group Concept in
-#: :mod:`bluepysnap.nodes.node_population`.
-NodeGroup: TypeAlias = (
-    NodeId
-    | CircuitNodeIds
+#: A ``group`` that selects any number of nodes: :data:`NodeGroup` without the single node ids.
+#: Used in the overloads, to separate the single node case, which returns different types.
+MultiNodeGroup: TypeAlias = (
+    CircuitNodeIds
     | Sequence[int]
     | Sequence[CircuitNodeId]
     | npt.NDArray[np.integer]
@@ -27,6 +26,10 @@ NodeGroup: TypeAlias = (
     | Mapping[str, Any]
     | None
 )
+
+#: The ``group`` argument used to select nodes, see the Group Concept in
+#: :mod:`bluepysnap.nodes.node_population`.
+NodeGroup: TypeAlias = NodeId | MultiNodeGroup
 
 #: A single edge: an edge id, or an edge id with its population.
 EdgeId: TypeAlias = int | np.integer | CircuitEdgeId

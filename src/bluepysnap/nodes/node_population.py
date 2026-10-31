@@ -73,7 +73,7 @@ import pandas as pd
 from more_itertools import first
 
 from bluepysnap import query, utils
-from bluepysnap._typing import IdsArray, NodeGroup, NodeId, PropertyList
+from bluepysnap._typing import IdsArray, MultiNodeGroup, NodeGroup, NodeId, PropertyList
 from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.circuit_ids_types import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
@@ -471,8 +471,10 @@ class NodePopulation:
 
     @overload
     def get(self, group: NodeId, properties: str, raise_missing_property: bool = True) -> Any: ...
+    # pyright reports a partial overlap between CircuitNodeId and Sequence[int], but a
+    # CircuitNodeId (a str and an int) can't be a sequence of ints
     @overload
-    def get(
+    def get(  # pyright: ignore[reportOverlappingOverload]
         self,
         group: NodeId,
         properties: PropertyList | None = None,
@@ -480,16 +482,20 @@ class NodePopulation:
     ) -> pd.Series: ...
     @overload
     def get(
-        self, group: NodeGroup, properties: str, raise_missing_property: bool = True
-    ) -> pd.Series: ...
-    @overload
-    def get(
-        self, group: NodeGroup = None, *, properties: str, raise_missing_property: bool = True
+        self, group: MultiNodeGroup, properties: str, raise_missing_property: bool = True
     ) -> pd.Series: ...
     @overload
     def get(
         self,
-        group: NodeGroup = None,
+        group: MultiNodeGroup = None,
+        *,
+        properties: str,
+        raise_missing_property: bool = True,
+    ) -> pd.Series: ...
+    @overload
+    def get(
+        self,
+        group: MultiNodeGroup = None,
         properties: PropertyList | None = None,
         raise_missing_property: bool = True,
     ) -> pd.DataFrame: ...
@@ -581,10 +587,11 @@ class NodePopulation:
         result = result[properties] if properties is not None else result
         return result
 
+    # see the comment about pyright in the overloads of get
     @overload
-    def positions(self, group: NodeId) -> pd.Series: ...
+    def positions(self, group: NodeId) -> pd.Series: ...  # pyright: ignore[reportOverlappingOverload]
     @overload
-    def positions(self, group: NodeGroup = None) -> pd.DataFrame: ...
+    def positions(self, group: MultiNodeGroup = None) -> pd.DataFrame: ...
     def positions(self, group: NodeGroup = None) -> pd.Series | pd.DataFrame:
         """Node position(s) as pandas Series or DataFrame.
 
@@ -607,10 +614,13 @@ class NodePopulation:
         result = self.get(group=group, properties=[Node.X, Node.Y, Node.Z])
         return result.astype(float)
 
+    # see the comment about pyright in the overloads of get
     @overload
-    def orientations(self, group: NodeId) -> npt.NDArray[np.float64]: ...
+    def orientations(  # pyright: ignore[reportOverlappingOverload]
+        self, group: NodeId
+    ) -> npt.NDArray[np.float64]: ...
     @overload
-    def orientations(self, group: NodeGroup = None) -> pd.Series: ...
+    def orientations(self, group: MultiNodeGroup = None) -> pd.Series: ...
     def orientations(self, group: NodeGroup = None) -> npt.NDArray[np.float64] | pd.Series:
         """Node orientation(s) as a pandas numpy array or pandas Series.
 

@@ -3,13 +3,17 @@
 import contextlib
 import io
 import os
+from collections.abc import Callable, Generator, Iterable, Mapping
 from pathlib import Path
+from typing import Any, TypeAlias, TypeGuard
 
 import h5py
 import libsonata
 import numpy as np
+import numpy.typing as npt
 
 from bluepysnap import schemas
+from bluepysnap._typing import ValidationErrors
 from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.config import Parser
 from bluepysnap.exceptions import BluepySnapValidationError
@@ -22,8 +26,11 @@ try:
 except ImportError:
     NEURODAMUS_PRESENT = False
 
+# node ids of each node population
+_IdsPerPopulation: TypeAlias = Mapping[str, npt.NDArray[np.integer] | list[int] | set[int]]
 
-def _resolve_path(path, config):
+
+def _resolve_path(path: str | os.PathLike[str], config: dict[str, Any]) -> Path:
     path = Path(path)
 
     if path.is_absolute():
@@ -32,16 +39,16 @@ def _resolve_path(path, config):
     return config["_config_dir"] / path
 
 
-def _parse_config(path):
+def _parse_config(path: str | os.PathLike[str]) -> dict[str, Any]:
     """Parse simulation / circuit config file."""
     return Parser.parse(load_json(path), str(Path(path).parent))
 
 
-def _file_exists(path):
+def _file_exists(path: str | os.PathLike[str] | None) -> TypeGuard[str | os.PathLike[str]]:
     return Path(path).is_file() if path is not None else False
 
 
-def _get_node_sets(config):
+def _get_node_sets(config: dict[str, Any]) -> NodeSets:
     """Get simulation node sets instance.
 
     Returns circuit's node sets instance extended with that of the simulation.
@@ -61,13 +68,13 @@ def _get_node_sets(config):
     return node_sets
 
 
-def _get_output_dir(config):
+def _get_output_dir(config: dict[str, Any]) -> Path:
     """Resolve output directory from the config."""
     output_dir = config.get("output", {}).get("output_dir", "output")
     return _resolve_path(output_dir, config)
 
 
-def _get_circuit_path(config):
+def _get_circuit_path(config: dict[str, Any]) -> Path | str:
     """Resolve circuit config path from the config."""
     if path := config.get("network", "circuit_config.json"):
         return _resolve_path(path, config)
@@ -75,7 +82,9 @@ def _get_circuit_path(config):
     return ""
 
 
-def _add_validation_parameters(config, config_path):
+def _add_validation_parameters(
+    config: dict[str, Any], config_path: str | os.PathLike[str]
+) -> dict[str, Any]:
     """Add helper parameters to the config."""
     config["_config_dir"] = Path(config_path).parent.absolute()
     config["_output_dir"] = _get_output_dir(config)
@@ -86,7 +95,7 @@ def _add_validation_parameters(config, config_path):
 
 
 @contextlib.contextmanager
-def _silent_neurodamus():
+def _silent_neurodamus() -> Generator[Any]:
     """Yield a no-log, no-output (unless error) NeurodamusCore instance."""
     # No need to init MPI since we're not running anything. This also supresses some log output.
     os.environ["NEURON_INIT_MPI"] = "0"
@@ -102,13 +111,15 @@ def _silent_neurodamus():
             yield neurodamus.core.NeurodamusCore
 
 
-def _warn_on_no_neurodamus(prefix):
+def _warn_on_no_neurodamus(prefix: str) -> ValidationErrors:
     """A little helper to have consistent warning when neurodamus is not found."""
     message = f"{prefix}: Can not validate: Neurodamus not found in environment"
     return [BluepySnapValidationError.warning(message)]
 
 
-def _validate_file_exists(path, prefix, fatal=True):
+def _validate_file_exists(
+    path: str | os.PathLike[str] | None, prefix: str, fatal: bool = True
+) -> ValidationErrors:
     """Validates the existence of a file.
 
     Note: Error is the same if ``path`` is a directory.
@@ -117,7 +128,9 @@ def _validate_file_exists(path, prefix, fatal=True):
     return [] if _file_exists(path) else [error(f"{prefix}: No such file: {path}")]
 
 
-def _validate_node_set_exists(config, node_set, prefix):
+def _validate_node_set_exists(
+    config: dict[str, Any], node_set: str, prefix: str
+) -> ValidationErrors:
     """Validates the existence of a node set."""
     node_sets = config["_node_sets_instance"]
     if node_set not in node_sets:
@@ -126,7 +139,7 @@ def _validate_node_set_exists(config, node_set, prefix):
     return []
 
 
-def _validate_mechanism_variables(suffix, mechanism):
+def _validate_mechanism_variables(suffix: str, mechanism: Iterable[str]) -> ValidationErrors:
     """Check that mechanism name (=suffix) and corresponding variables are defined in neurodamus."""
     prefix = f"conditions.mechanisms.{suffix}: neurodamus"
 
@@ -145,7 +158,7 @@ def _validate_mechanism_variables(suffix, mechanism):
     return errors
 
 
-def _validate_mechanisms(mechanisms):
+def _validate_mechanisms(mechanisms: Mapping[str, Iterable[str]]) -> ValidationErrors:
     """Validate the 'conditions.mechanisms' section in the config."""
     if NEURODAMUS_PRESENT:
         errors = []
@@ -157,7 +170,7 @@ def _validate_mechanisms(mechanisms):
     return _warn_on_no_neurodamus("conditions.mechanisms")
 
 
-def validate_conditions(config):
+def validate_conditions(config: dict[str, Any]) -> ValidationErrors:
     """Validate the 'conditions' section in the config."""
     conditions = config.get("conditions", {})
     modifications = conditions.get("modifications", {})
@@ -174,7 +187,7 @@ def validate_conditions(config):
     return errors
 
 
-def _validate_mod_override(mod_override, prefix):
+def _validate_mod_override(mod_override: str, prefix: str) -> ValidationErrors:
     if NEURODAMUS_PRESENT:
         with _silent_neurodamus() as nd:
             try:
@@ -187,7 +200,9 @@ def _validate_mod_override(mod_override, prefix):
     return _warn_on_no_neurodamus(prefix)
 
 
-def _validate_override(idx, item, config):
+def _validate_override(
+    idx: int, item: Mapping[str, Any], config: dict[str, Any]
+) -> ValidationErrors:
     """Helper function to validate a single connection override."""
     errors = []
     prefix = f"connection_overrides[{idx}]"
@@ -202,7 +217,7 @@ def _validate_override(idx, item, config):
     return errors
 
 
-def validate_connection_overrides(config):
+def validate_connection_overrides(config: dict[str, Any]) -> ValidationErrors:
     """Validate the 'connection_overrides' section in the config."""
     overrides = config.get("connection_overrides")
     errors = []
@@ -214,7 +229,7 @@ def validate_connection_overrides(config):
     return errors
 
 
-def _get_ids_from_spike_file(file_):
+def _get_ids_from_spike_file(file_: str | os.PathLike[str]) -> dict[str, set[int]]:
     """Get unique gids from an input spikes file."""
     file_ = Path(file_)
     suffix = file_.suffix
@@ -226,7 +241,7 @@ def _get_ids_from_spike_file(file_):
     raise OSError(f"Unsupported file type: '{suffix}' (supported: '.h5')")
 
 
-def _get_ids_from_node_set(node_set, config):
+def _get_ids_from_node_set(node_set: str, config: dict[str, Any]) -> _IdsPerPopulation:
     """Get unique gids per population from a node set."""
     circuit = libsonata.CircuitConfig.from_file(config["_circuit_config"])
     node_set = config["_node_sets_instance"][node_set]
@@ -240,7 +255,9 @@ def _get_ids_from_node_set(node_set, config):
     return ids_per_population
 
 
-def _get_ids_from_populations(config, only_non_virtual=False):
+def _get_ids_from_populations(
+    config: dict[str, Any], only_non_virtual: bool = False
+) -> _IdsPerPopulation:
     """Get node ids of populations."""
     circuit = libsonata.CircuitConfig.from_file(config["_circuit_config"])
     populations = circuit.node_populations
@@ -253,12 +270,14 @@ def _get_ids_from_populations(config, only_non_virtual=False):
     return {pop: circuit.node_population(pop).select_all().flatten() for pop in populations}
 
 
-def _get_missing_ids(sub_ids, super_ids):
+def _get_missing_ids(
+    sub_ids: set[int] | _IdsPerPopulation, super_ids: _IdsPerPopulation
+) -> list[Any]:
     """Get `sub_ids` ids missing from `super_ids`."""
     if isinstance(sub_ids, set):
         # if sub_ids is a set, any population having such id suffices
-        super_ids = set(np.concatenate([*super_ids.values()]))
-        return list(sub_ids - super_ids)
+        all_super_ids = set(np.concatenate([*super_ids.values()]))
+        return list(sub_ids - all_super_ids)
 
     # list conversion required by CircuitNodeIds.from_dict
     missing_per_pop = {p: list(set(sub_ids[p]) - set(super_ids.get(p, []))) for p in sub_ids}
@@ -266,7 +285,12 @@ def _get_missing_ids(sub_ids, super_ids):
     return CircuitNodeIds.from_dict(missing_per_pop).tolist()
 
 
-def _compare_ids(sub_ids, super_ids, super_source, prefix):
+def _compare_ids(
+    sub_ids: set[int] | _IdsPerPopulation,
+    super_ids: _IdsPerPopulation,
+    super_source: str,
+    prefix: str,
+) -> ValidationErrors:
     """Check that `sub_ids` are found in `super_ids`."""
     missing_ids = _get_missing_ids(sub_ids, super_ids)
 
@@ -280,7 +304,9 @@ def _compare_ids(sub_ids, super_ids, super_source, prefix):
     return []
 
 
-def _validate_spike_file_contents(input_, config, prefix):
+def _validate_spike_file_contents(
+    input_: Mapping[str, Any], config: dict[str, Any], prefix: str
+) -> ValidationErrors:
     try:
         spike_ids = _get_ids_from_spike_file(_resolve_path(input_["spike_file"], config))
     except OSError as e:
@@ -296,7 +322,9 @@ def _validate_spike_file_contents(input_, config, prefix):
     return _compare_ids(spike_ids, sim_ids, source, prefix)
 
 
-def _validate_spike_input(name, input_, config):
+def _validate_spike_input(
+    name: str, input_: Mapping[str, Any], config: dict[str, Any]
+) -> ValidationErrors:
     errors = []
 
     if (key := "spike_file") in input_:
@@ -313,7 +341,9 @@ def _validate_spike_input(name, input_, config):
     return errors
 
 
-def _validate_input_resistance_in_nodes(_input, config, prefix):
+def _validate_input_resistance_in_nodes(
+    _input: Mapping[str, Any], config: dict[str, Any], prefix: str
+) -> ValidationErrors:
     circuit = libsonata.CircuitConfig.from_file(config["_circuit_config"])
     node_set = _input["node_set"]
     required = "@dynamics_params/input_resistance"
@@ -327,7 +357,9 @@ def _validate_input_resistance_in_nodes(_input, config, prefix):
     return errors
 
 
-def _validate_input(name, input_, config):
+def _validate_input(
+    name: str, input_: Mapping[str, Any], config: dict[str, Any]
+) -> ValidationErrors:
     """Helper function to validate a single input."""
     errors = []
 
@@ -351,7 +383,7 @@ def _validate_input(name, input_, config):
     return errors
 
 
-def validate_inputs(config):
+def validate_inputs(config: dict[str, Any]) -> ValidationErrors:
     """Validate the 'inputs' section in the config."""
     errors = []
 
@@ -361,7 +393,7 @@ def validate_inputs(config):
     return errors
 
 
-def validate_network(config):
+def validate_network(config: dict[str, Any]) -> ValidationErrors:
     """Validate the 'network' section in the config."""
     key = "network"
 
@@ -371,7 +403,7 @@ def validate_network(config):
     return [BluepySnapValidationError.warning(f"{key}: circuit path not specified")]
 
 
-def validate_node_set(config):
+def validate_node_set(config: dict[str, Any]) -> ValidationErrors:
     """Validate the 'node_set' section in the config."""
     key = "node_set"
 
@@ -381,7 +413,7 @@ def validate_node_set(config):
     return []
 
 
-def validate_node_sets_file(config):
+def validate_node_sets_file(config: dict[str, Any]) -> ValidationErrors:
     """Validate the 'node_sets_file' section in the config."""
     key = "node_sets_file"
 
@@ -391,7 +423,7 @@ def validate_node_sets_file(config):
     return []
 
 
-def validate_output(config):
+def validate_output(config: dict[str, Any]) -> ValidationErrors:
     """Validate the 'output' section in the config."""
     output = config.get("output", {})
     output_dir = config["_output_dir"]
@@ -412,7 +444,9 @@ def validate_output(config):
     return errors
 
 
-def _validate_report(name, report, config):
+def _validate_report(
+    name: str, report: Mapping[str, Any], config: dict[str, Any]
+) -> ValidationErrors:
     """Helper function to validate a single report."""
     errors = []
 
@@ -428,7 +462,7 @@ def _validate_report(name, report, config):
     return errors
 
 
-def validate_reports(config):
+def validate_reports(config: dict[str, Any]) -> ValidationErrors:
     """Validate the 'reports' section in the config."""
     errors = []
 
@@ -438,7 +472,9 @@ def validate_reports(config):
     return errors
 
 
-def _validate_electrodes_file(path, config):
+def _validate_electrodes_file(
+    path: str | os.PathLike[str], config: dict[str, Any]
+) -> ValidationErrors:
     """Validate the ids for each of the populations in `electrodes_file` can be found."""
     prefix = "run.electrodes_file"
     errors = _validate_file_exists(path, prefix=prefix)
@@ -462,7 +498,7 @@ def _validate_electrodes_file(path, config):
     return _compare_ids(elec_ids, sim_ids, source, prefix)
 
 
-def validate_run(config):
+def validate_run(config: dict[str, Any]) -> ValidationErrors:
     """Validate the 'run' section in the config."""
     if electrodes_file := config.get("run", {}).get("electrodes_file", ""):
         electrodes_file = _resolve_path(electrodes_file, config)
@@ -471,7 +507,7 @@ def validate_run(config):
     return []
 
 
-VALIDATORS = {
+VALIDATORS: dict[str, Callable[[dict[str, Any]], ValidationErrors]] = {
     "conditions": validate_conditions,
     "connection_overrides": validate_connection_overrides,
     "inputs": validate_inputs,
@@ -484,21 +520,25 @@ VALIDATORS = {
 }
 
 
-def validate_config(config):
+def validate_config(config: dict[str, Any]) -> ValidationErrors:
     """Iterate through the sections in the config and validate them."""
     return [error for section in sorted(VALIDATORS) for error in VALIDATORS[section](config)]
 
 
-def validate(config_file, print_errors=True, ignore_datatype_errors=False):
+def validate(
+    config_file: str | os.PathLike[str],
+    print_errors: bool = True,
+    ignore_datatype_errors: bool = False,
+) -> set[BluepySnapValidationError]:
     """Validate Sonata simulation config.
 
     Args:
-        config_file (str): path to Sonata simulation config file
-        print_errors (bool): print errors
-        ignore_datatype_errors (bool): Don't check if datatypes are correct
+        config_file: path to Sonata simulation config file
+        print_errors: print errors
+        ignore_datatype_errors: Don't check if datatypes are correct
 
     Returns:
-        set: set of errors, empty if no errors
+        set of errors, empty if no errors
     """
     config = _parse_config(config_file)
     errors = schemas.validate_simulation_schema(config_file, config, ignore_datatype_errors)

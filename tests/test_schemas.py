@@ -212,6 +212,19 @@ def test_validate_config_error(to_remove_list, expected):
         assert errors[0] == BluepySnapValidationError.fatal(f"{config_copy_path}:\n\t{expected}")
 
 
+def test_validate_config_error_path():
+    # the path can be a Path, not only a str, also when building the error messages
+    with copy_test_data() as (_, config_copy_path):
+        with edit_config(config_copy_path) as config:
+            del config["networks"]
+        errors = test_module.validate_circuit_schema(
+            config_copy_path, config, ignore_datatype_errors=False
+        )
+
+    expected = f"{config_copy_path}:\n\t'networks' is a required property"
+    assert errors == [BluepySnapValidationError.fatal(expected)]
+
+
 def test_validate_nodes_ok():
     errors = test_module.validate_nodes_schema(
         str(TEST_DATA_DIR / "nodes_single_pop.h5"), "biophysical", ignore_datatype_errors=False

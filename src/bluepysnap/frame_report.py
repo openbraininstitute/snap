@@ -17,23 +17,34 @@
 """Frame report access."""
 
 import logging
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from functools import cached_property
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
 import numpy as np
 import pandas as pd
-from libsonata import ElementReportReader, SonataError
+from libsonata import ElementReportPopulation, ElementReportReader, SonataError
 
 import bluepysnap._plotting
 from bluepysnap import query
 from bluepysnap._compat import CONCAT_NO_COPY
+from bluepysnap._typing import IdsArray, NodeGroup
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import ensure_ids
 
+if TYPE_CHECKING:
+    from bluepysnap.node_sets import NodeSet, NodeSets
+    from bluepysnap.nodes.node_population import NodePopulation
+    from bluepysnap.simulation import Simulation
+
 L = logging.getLogger(__name__)
 
+PopulationReportT = TypeVar("PopulationReportT", bound="PopulationFrameReport")
 
-def _collect_population_reports(frame_report, cls):
+
+def _collect_population_reports(
+    frame_report: "FrameReport[Any]", cls: type[PopulationReportT]
+) -> dict[str, PopulationReportT]:
     return {
         population: cls(frame_report, population) for population in frame_report.population_names
     }
@@ -42,31 +53,35 @@ def _collect_population_reports(frame_report, cls):
 class PopulationFrameReport:
     """Access to PopulationFrameReport data."""
 
-    def __init__(self, frame_report, population_name):
+    def __init__(self, frame_report: "FrameReport[Any]", population_name: str) -> None:
         """Initializes a PopulationFrameReport object from a FrameReport.
 
         Args:
-            frame_report (FrameReport): FrameReport containing this frame report population.
-            population_name (str): the population name corresponding to this report.
+            frame_report: FrameReport containing this frame report population.
+            population_name: the population name corresponding to this report.
 
         Returns:
-            PopulationFrameReport: A PopulationFrameReport object.
+            A PopulationFrameReport object.
         """
         self.frame_report = frame_report
         self._frame_population = self._get_reader(frame_report, population_name)
         self._population_name = population_name
 
     @staticmethod
-    def _get_reader(frame_report, population_name):
+    def _get_reader(
+        frame_report: "FrameReport[Any]", population_name: str
+    ) -> ElementReportPopulation:
         """Access to the population compartment reader."""
         return ElementReportReader(frame_report.to_libsonata.file_name)[population_name]
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Access to the population name."""
         return self._population_name
 
-    def resolve_nodes(self, group, raise_missing_property=True):
+    def resolve_nodes(
+        self, group: "NodeGroup | NodeSet", raise_missing_property: bool = True
+    ) -> IdsArray:
         """Transform a group into ids array.
 
         Notes:
@@ -76,25 +91,31 @@ class PopulationFrameReport:
         raise NotImplementedError
 
     @staticmethod
-    def _wrap_columns(columns):
+    def _wrap_columns(columns: pd.MultiIndex) -> pd.Index:
         """Allows to change the columns names if needed."""
         return columns
 
-    def get(self, group=None, t_start=None, t_stop=None, t_step=None):
+    def get(
+        self,
+        group: NodeGroup = None,
+        t_start: float | None = None,
+        t_stop: float | None = None,
+        t_step: float | None = None,
+    ) -> pd.DataFrame:
         """Fetch data from the report.
 
         Args:
-            group (None/int/list/np.array/dict): Get frames filtered by :ref:`Group Concept`.
-            t_start (float): Include only frames occurring at or after this time.
-            t_stop (float): Include only frames occurring at or before this time.
-            t_step (float): Optional time step, useful to reduce the number of samples.
+            group: Get frames filtered by :ref:`Group Concept`.
+            t_start: Include only frames occurring at or after this time.
+            t_stop: Include only frames occurring at or before this time.
+            t_step: Optional time step, useful to reduce the number of samples.
                 It should be a multiple of the report time step dt, and it's equal to dt by default.
                 If the given t_step isn't an exact multiple, it's rounded to the closer multiple.
                 Only the samples at t = t0 + k * t_step, for k = 0, 1... are returned,
                 where t0 is the first sample time >= t_start.
 
         Returns:
-            pandas.DataFrame: frame as columns indexed by timestamps.
+            frame as columns indexed by timestamps.
         """
         t_stride = round(t_step / self.frame_report.dt) if t_step is not None else 1
         if t_stride < 1:
@@ -118,15 +139,15 @@ class PopulationFrameReport:
         ).sort_index(axis=1)
 
         # rename from multi index to index cannot be achieved easily through df.rename
-        res.columns = self._wrap_columns(res.columns)
+        res.columns = self._wrap_columns(cast(pd.MultiIndex, res.columns))
         return res
 
     @cached_property
-    def node_ids(self):
+    def node_ids(self) -> IdsArray:
         """Returns the node ids present in the report.
 
         Returns:
-            np.Array: Numpy array containing the node_ids included in the report
+            Numpy array containing the node_ids included in the report
         """
         return np.sort(ensure_ids(self._frame_population.get_node_ids()))
 
@@ -134,20 +155,26 @@ class PopulationFrameReport:
 class FilteredFrameReport:
     """Access to filtered FrameReport data."""
 
-    def __init__(self, frame_report, group=None, t_start=None, t_stop=None):
+    def __init__(
+        self,
+        frame_report: "FrameReport[Any]",
+        group: NodeGroup = None,
+        t_start: float | None = None,
+        t_stop: float | None = None,
+    ) -> None:
         """Initialize a FilteredFrameReport.
 
         A FilteredFrameReport is a lazy and cached object which contains the filtered data
         from all the populations of a report.
 
         Args:
-            frame_report (FrameReport): The FrameReport to filter.
-            group (None/int/list/np.array/dict): Get frames filtered by :ref:`Group Concept`.
-            t_start (float): Include only frames occurring at or after this time.
-            t_stop (float): Include only frames occurring at or before this time.
+            frame_report: The FrameReport to filter.
+            group: Get frames filtered by :ref:`Group Concept`.
+            t_start: Include only frames occurring at or after this time.
+            t_stop: Include only frames occurring at or before this time.
 
         Returns:
-            FilteredFrameReport: A FilteredFrameReport object.
+            A FilteredFrameReport object.
         """
         self.frame_report = frame_report
         self.group = group
@@ -155,11 +182,11 @@ class FilteredFrameReport:
         self.t_stop = t_stop
 
     @cached_property
-    def report(self):
+    def report(self) -> pd.DataFrame:
         """Access to the report data.
 
         Returns:
-            pandas.DataFrame: A DataFrame containing the data from the report. Row's indices are the
+            A DataFrame containing the data from the report. Row's indices are the
             different timestamps and the column's MultiIndex are:
 
             - (population_name, node_id, compartment id) for the CompartmentReport
@@ -182,49 +209,52 @@ class FilteredFrameReport:
     trace = bluepysnap._plotting.frame_trace
 
 
-class FrameReport:
+class FrameReport(Generic[PopulationReportT]):
     """Access to FrameReport data."""
 
-    def __init__(self, simulation, report_name):
+    # class of the population reports, set by the subclasses
+    _population_class: ClassVar[type[Any]] = PopulationFrameReport
+
+    def __init__(self, simulation: "Simulation", report_name: str) -> None:
         """Initializes a FrameReport object from a simulation object.
 
         Args:
-            simulation (Simulation): Simulation containing this frame report.
-            report_name (str): The name of this frame report.
+            simulation: Simulation containing this frame report.
+            report_name: The name of this frame report.
 
         Returns:
-            FrameReport: A FrameReport object.
+            A FrameReport object.
         """
         self._simulation = simulation
         self.name = report_name
 
     @cached_property
-    def _frame_reader(self):
+    def _frame_reader(self) -> ElementReportReader:
         """Access to the compartment report reader."""
         return ElementReportReader(self.to_libsonata.file_name)
 
     @property
-    def to_libsonata(self):
+    def to_libsonata(self) -> Any:
         """Access libsonata instance of the report."""
         return self.simulation.to_libsonata.report(self.name)
 
     @property
-    def config(self):
+    def config(self) -> dict[str, Any]:
         """Access the report config."""
         return self.simulation.config["reports"][self.name]
 
     @property
-    def time_start(self):
+    def time_start(self) -> float:
         """Returns the starting time of the report."""
         return self.to_libsonata.start_time
 
     @property
-    def time_stop(self):
+    def time_stop(self) -> float:
         """Returns the stopping time of the report."""
         return self.to_libsonata.end_time
 
     @property
-    def dt(self):
+    def dt(self) -> float:
         """Returns the frequency of reporting in milliseconds."""
         dt = self.to_libsonata.dt
         if dt != self.simulation.dt:
@@ -232,7 +262,7 @@ class FrameReport:
         return dt
 
     @property
-    def time_units(self):
+    def time_units(self) -> str:
         """Returns the data unit for this report."""
         units = {self._frame_reader[pop].time_units for pop in self.population_names}
         if len(units) > 1:
@@ -240,7 +270,7 @@ class FrameReport:
         return units.pop()
 
     @cached_property
-    def data_units(self):
+    def data_units(self) -> str:
         """Returns the data unit for this report."""
         units = {self._frame_reader[pop].data_units for pop in self.population_names}
         if len(units) > 1:
@@ -248,46 +278,48 @@ class FrameReport:
         return units.pop()
 
     @property
-    def node_set(self):
+    def node_set(self) -> str:
         """Returns the name of the node set for the report."""
         return self.to_libsonata.cells
 
     @property
-    def simulation(self):
+    def simulation(self) -> "Simulation":
         """Return the Simulation object related to this frame report."""
         return self._simulation
 
     @cached_property
-    def population_names(self):
+    def population_names(self) -> list[str]:
         """Returns the population names included in this report."""
         return sorted(self._frame_reader.get_population_names())
 
     @cached_property
-    def _population_report(self):
-        """Collect the different PopulationFrameReport."""
-        return _collect_population_reports(self, PopulationFrameReport)
+    def _population_report(self) -> dict[str, PopulationReportT]:
+        """Collect the different population reports."""
+        return _collect_population_reports(self, self._population_class)
 
-    def __getitem__(self, population_name):
+    def __getitem__(self, population_name: str) -> PopulationReportT:
         """Access the PopulationFrameReports corresponding to the population 'population_name'."""
         return self._population_report[population_name]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         """Allows iteration over the different PopulationFrameReports."""
         return iter(self._population_report)
 
-    def filter(self, group=None, t_start=None, t_stop=None):
+    def filter(
+        self, group: NodeGroup = None, t_start: float | None = None, t_stop: float | None = None
+    ) -> FilteredFrameReport:
         """Returns a FilteredFrameReport.
 
         A FilteredFrameReport is a lazy and cached object which contains the filtered data
         from all the populations of a report.
 
         Args:
-            group (None/int/list/np.array/dict): Get frames filtered by :ref:`Group Concept`.
-            t_start (float): Include only frames occurring at or after this time.
-            t_stop (float): Include only frames occurring at or before this time.
+            group: Get frames filtered by :ref:`Group Concept`.
+            t_start: Include only frames occurring at or after this time.
+            t_stop: Include only frames occurring at or before this time.
 
         Returns:
-            FilteredFrameReport: A FilteredFrameReport object.
+            A FilteredFrameReport object.
         """
         return FilteredFrameReport(self, group, t_start, t_stop)
 
@@ -296,16 +328,18 @@ class PopulationCompartmentReport(PopulationFrameReport):
     """Access to PopulationCompartmentsReport data."""
 
     @property
-    def _node_sets(self):
+    def _node_sets(self) -> "NodeSets":
         """Access to simulation node sets."""
         return self.frame_report.simulation.node_sets
 
     @cached_property
-    def nodes(self):
+    def nodes(self) -> "NodePopulation":
         """Returns the NodePopulation corresponding to this report."""
         return self.frame_report.simulation.circuit.nodes[self._population_name]
 
-    def resolve_nodes(self, group, raise_missing_property=True):
+    def resolve_nodes(
+        self, group: "NodeGroup | NodeSet", raise_missing_property: bool = True
+    ) -> IdsArray:
         """Transform a group into a node_id array."""
         if isinstance(group, str):
             group = self._node_sets[group]
@@ -316,20 +350,17 @@ class PopulationCompartmentReport(PopulationFrameReport):
         return self.nodes.ids(group=group, raise_missing_property=raise_missing_property)
 
 
-class CompartmentReport(FrameReport):
+class CompartmentReport(FrameReport[PopulationCompartmentReport]):
     """Access to a CompartmentsReport data."""
 
-    @cached_property
-    def _population_report(self):
-        """Collect the different PopulationCompartmentsReport."""
-        return _collect_population_reports(self, PopulationCompartmentReport)
+    _population_class = PopulationCompartmentReport
 
 
 class PopulationSomaReport(PopulationCompartmentReport):
     """Access to PopulationSomaReport data."""
 
     @staticmethod
-    def _wrap_columns(columns):
+    def _wrap_columns(columns: pd.MultiIndex) -> pd.Index:
         """Transform pandas.MultiIndex into pandas.Index for the pandas.DataFrame columns.
 
         Notes:
@@ -340,10 +371,7 @@ class PopulationSomaReport(PopulationCompartmentReport):
         return columns.levels[0]
 
 
-class SomaReport(FrameReport):
+class SomaReport(FrameReport[PopulationSomaReport]):
     """Access to a SomaReport data."""
 
-    @cached_property
-    def _population_report(self):
-        """Collect the different PopulationSomasReport."""
-        return _collect_population_reports(self, PopulationSomaReport)
+    _population_class = PopulationSomaReport

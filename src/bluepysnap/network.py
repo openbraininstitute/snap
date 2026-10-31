@@ -17,96 +17,114 @@
 """Module containing the Abstract classes for the Network."""
 
 import abc
+from collections.abc import Callable, Iterator
 from functools import cached_property
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from bluepysnap import utils
+from bluepysnap.circuit_ids import CircuitIds
 from bluepysnap.exceptions import BluepySnapError
 
+if TYPE_CHECKING:
+    from bluepysnap.circuit import Circuit
+    from bluepysnap.edges.edge_population import EdgePopulation
+    from bluepysnap.nodes.node_population import NodePopulation
 
-class NetworkObject(abc.ABC):
+PopulationT = TypeVar("PopulationT", bound="NodePopulation | EdgePopulation")
+CircuitIdsT = TypeVar("CircuitIdsT", bound=CircuitIds)
+
+
+class NetworkObject(abc.ABC, Generic[PopulationT]):
     """Abstract class for the top level NetworkObjects accessor."""
 
-    _population_class = None
+    _population_class: ClassVar[type[Any]]
 
-    def __init__(self, circuit):
+    def __init__(self, circuit: "Circuit") -> None:
         """Initialize the top level NetworkObjects accessor."""
         self._circuit = circuit
 
-    def _get_populations(self, cls):
+    def _get_populations(self, cls: type[PopulationT]) -> dict[str, PopulationT]:
         """Collects the different NetworkObjectPopulation and returns them as a dict."""
         return {name: cls(self._circuit, name) for name in self.population_names}
 
     @cached_property
-    def _populations(self):
+    def _populations(self) -> dict[str, PopulationT]:
         """Cached population dictionary."""
         return self._get_populations(self._population_class)
 
     @property
     @abc.abstractmethod
-    def population_names(self):
+    def population_names(self) -> list[str]:
         """Should define all sorted NetworkObjects population names from the Circuit."""
 
-    def keys(self):
+    def keys(self) -> Iterator[str]:
         """Returns iterator on the NetworkObjectPopulation names.
 
         Made to simulate the behavior of a dict.keys().
         """
         return (name for name in self.population_names)
 
-    def values(self):
+    def values(self) -> Iterator[PopulationT]:
         """Returns iterator on the NetworkObjectPopulations.
 
         Made to simulate the behavior of a dict.values().
         """
         return (self[name] for name in self.population_names)
 
-    def items(self):
+    def items(self) -> Iterator[tuple[str, PopulationT]]:
         """Returns iterator on the tuples (population name, NetworkObjectPopulations).
 
         Made to simulate the behavior of a dict.items().
         """
         return ((name, self[name]) for name in self.population_names)
 
-    def __getitem__(self, population_name):
+    def __getitem__(self, population_name: str) -> PopulationT:
         """Access the NetworkObjectPopulation corresponding to the population 'population_name'."""
         try:
             return self._populations[population_name]
         except KeyError as e:
             raise BluepySnapError(f"{population_name} not a {self.__class__} population.") from e
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         """Allows iteration over the different NetworkObjectPopulation."""
         return iter(self.keys())
 
     @cached_property
-    def size(self):
+    def size(self) -> int:
         """Total number of NetworkObject inside the circuit."""
         return sum(pop.size for pop in self.values())
 
     @cached_property
-    def property_names(self):
+    def property_names(self) -> set[str]:
         """Returns all the NetworkObject properties present inside the circuit."""
         return set(prop for pop in self.values() for prop in pop.property_names)
 
-    def _get_ids_from_pop(self, fun_to_apply, returned_ids_cls, sample=None, limit=None):
+    def _get_ids_from_pop(
+        self,
+        fun_to_apply: Callable[[PopulationT], tuple[npt.NDArray[np.integer], str]],
+        returned_ids_cls: type[CircuitIdsT],
+        sample: int | None = None,
+        limit: int | None = None,
+    ) -> CircuitIdsT:
         """Get CircuitIds of class 'returned_ids_cls' for all populations using 'fun_to_apply'.
 
         Args:
-            fun_to_apply (function): A function that returns the list of IDs for each population
+            fun_to_apply: A function that returns the list of IDs for each population
                 and the population containing these IDs.
-            returned_ids_cls (CircuitNodeIds/CircuitEdgeIds): the class for the CircuitIds.
-            sample (int): If specified, randomly choose ``sample`` number of
+            returned_ids_cls: the class for the CircuitIds.
+            sample: If specified, randomly choose ``sample`` number of
                 IDs from the match result. If the size of the sample is greater than
                 the size of all the NetworkObjectPopulation then all ids are taken and shuffled.
-            limit (int): If specified, return the first ``limit`` number of
+            limit: If specified, return the first ``limit`` number of
                 IDs from the match result. If limit is greater than the size of all the population
                 then all IDs are returned.
 
         Returns:
-            CircuitNodeIds/CircuitEdgeIds: containing the IDs and the populations.
+            the IDs and the populations.
         """
         if not self.population_names:
             raise BluepySnapError("Cannot create CircuitIds for empty population.")
@@ -129,11 +147,11 @@ class NetworkObject(abc.ABC):
         return res
 
     @abc.abstractmethod
-    def ids(self, group=None, sample=None, limit=None):
+    def ids(self, group: Any = None, sample: int | None = None, limit: int | None = None) -> Any:
         """Resolves the ids of the NetworkObject."""
 
     @abc.abstractmethod
-    def get(self, group=None, properties=None):
+    def get(self, group: Any = None, properties: Any = None) -> Iterator[tuple[str, pd.DataFrame]]:
         """Yields the properties of the NetworkObject."""
         ids = self.ids(group)
         properties = utils.ensure_list(properties)
@@ -159,9 +177,9 @@ class NetworkObject(abc.ABC):
                 yield name, pop_df[[p for p in properties if p in pop_properties]]
 
     @abc.abstractmethod
-    def __getstate__(self):
+    def __getstate__(self) -> Any:
         """Make pickle-able, without storing state of caches."""
 
     @abc.abstractmethod
-    def __setstate__(self, state):
+    def __setstate__(self, state: Any) -> None:
         """Load from pickle state."""

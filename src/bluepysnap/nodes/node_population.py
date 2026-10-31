@@ -60,56 +60,68 @@ Examples:
     See more examples in ``NodePopulation::get``
 """
 
+import builtins
 import inspect
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from functools import cached_property
+from typing import TYPE_CHECKING, Any, overload
 
 import libsonata
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from more_itertools import first
 
 from bluepysnap import query, utils
+from bluepysnap._typing import IdsArray, MultiNodeGroup, NodeGroup, NodeId, PropertyList
 from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.circuit_ids_types import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSet
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Node
 
+if TYPE_CHECKING:
+    from bluepysnap.circuit import Circuit
+    from bluepysnap.morph import MorphHelper
+    from bluepysnap.neuron_models import NeuronModelsHelper
+    from bluepysnap.node_sets import NodeSets
+
 
 class NodePopulation:
     """Node population access."""
 
-    def __init__(self, circuit, population_name):
+    def __init__(self, circuit: "Circuit", population_name: str) -> None:
         """Initializes a NodePopulation object.
 
         Args:
-            circuit (bluepysnap.Circuit): the circuit object containing the node population
-            population_name (str): the name of the node population
+            circuit: the circuit object containing the node population
+            population_name: the name of the node population
 
         Returns:
-            NodePopulation: A NodePopulation object.
+            A NodePopulation object.
         """
         self._circuit = circuit
         self.name = population_name
 
     @property
-    def _node_sets(self):
+    def _node_sets(self) -> "NodeSets":
         """Node sets defined for this node population."""
         return self._circuit.node_sets
 
     @cached_property
-    def _cache(self):
+    def _cache(self) -> pd.DataFrame:
         """Cached DataFrame of nodes, to be accessed through _get_data()."""
         return pd.DataFrame(index=pd.RangeIndex(self.size, name="node_ids"))
 
-    def _get_libsonata_selection(self, node_ids):
+    def _get_libsonata_selection(self, node_ids: npt.ArrayLike | None) -> libsonata.Selection:
         """Return a libsonata Selection from the given node_ids."""
         if node_ids is None:
             return libsonata.Selection([(0, self.size)])
         return libsonata.Selection(node_ids)
 
-    def _get_values_from_sonata(self, nodes, attr, node_ids):
+    def _get_values_from_sonata(
+        self, nodes: libsonata.NodePopulation, attr: str, node_ids: npt.ArrayLike | None
+    ) -> npt.NDArray[Any] | pd.Categorical:
         """Return the selected values as np.ndarray or pd.Categorical."""
         selection = self._get_libsonata_selection(node_ids)
         if attr in nodes.enumeration_names:
@@ -132,7 +144,9 @@ class NodePopulation:
                 return nodes.get_dynamics_attribute(stripped, selection)
         raise BluepySnapError(f"Attribute not found in population {self.name}: {attr}")
 
-    def _iter_selected_properties(self, existing, desired):
+    def _iter_selected_properties(
+        self, existing: Iterable[str], desired: Iterable[str]
+    ) -> Iterator[tuple[int, str]]:
         """Yield ordered (idx, attr) for each attr in desired, and not in existing.
 
         Called to ensure that the order of the columns of the cached DataFrame doesn't depend
@@ -154,7 +168,11 @@ class NodePopulation:
                 continue
             yield idx, attr
 
-    def _get_data(self, properties=None, node_ids=None):
+    def _get_data(
+        self,
+        properties: str | Iterable[str] | None = None,
+        node_ids: list[int] | npt.NDArray[np.integer] | None = None,
+    ) -> pd.DataFrame:
         """Collect data for the node population as a pandas.DataFrame.
 
         Return a DataFrame with node_ids as index, loading the requested properties if needed.
@@ -168,8 +186,8 @@ class NodePopulation:
         - in self._node_ids_by_filter(), the required columns are selected if and when needed
 
         Args:
-            properties (str|set|list|None): properties to load, or None to load all of them.
-            node_ids (list|np.ndarray|None): node ids to select.
+            properties: properties to load, or None to load all of them.
+            node_ids: node ids to select.
                 If None, all the ids are selected, and the cache is read and updated if needed.
                 If not None, the cache is read and used if possible, but not updated.
         """
@@ -192,16 +210,17 @@ class NodePopulation:
                 self._iter_selected_properties(existing=result.columns, desired=properties_set)
             ):
                 values = self._get_values_from_sonata(nodes=nodes, attr=name, node_ids=node_ids)
-                result.insert(n + loc, name, values)
+                # pandas-stubs doesn't accept a Categorical as column values, pandas does
+                result.insert(n + loc, name, values)  # ty: ignore[invalid-argument-type]
         return result
 
     @cached_property
-    def _properties(self):
+    def _properties(self) -> Any:
         """Node population properties."""
         return self._circuit.to_libsonata.node_population_properties(self.name)
 
     @property
-    def to_libsonata(self):
+    def to_libsonata(self) -> libsonata.NodePopulation:
         """Libsonata node population.
 
         Not cached because it would keep the hdf5 file open.
@@ -209,44 +228,44 @@ class NodePopulation:
         return self._circuit.to_libsonata.node_population(self.name)
 
     @cached_property
-    def size(self):
+    def size(self) -> int:
         """Node population size."""
         return self.to_libsonata.size
 
     @property
-    def type(self):
+    def type(self) -> str:
         """Population type."""
         return self._properties.type
 
     @cached_property
-    def _property_names(self):
+    def _property_names(self) -> set[str]:
         return set(self.to_libsonata.attribute_names)
 
     @cached_property
-    def _dynamics_params_names(self):
+    def _dynamics_params_names(self) -> set[str]:
         return set(utils.add_dynamic_prefix(self.to_libsonata.dynamics_attribute_names))
 
     @cached_property
-    def _ordered_property_names(self):
+    def _ordered_property_names(self) -> list[str]:
         """Similar to self.property_names, but as an ordered list."""
         return sorted(self._property_names) + sorted(self._dynamics_params_names)
 
-    def source_in_edges(self):
+    def source_in_edges(self) -> set[str]:
         """Set of edge population names that use this node population as source.
 
         Returns:
-            set: a set containing the names of edge populations using this NodePopulation as
+            a set containing the names of edge populations using this NodePopulation as
             source.
         """
         return set(
             edge.name for edge in self._circuit.edges.values() if self.name == edge.source.name
         )
 
-    def target_in_edges(self):
+    def target_in_edges(self) -> set[str]:
         """Set of edge population names that use this node population as target.
 
         Returns:
-            set: a set containing the names of edge populations using this NodePopulation as
+            a set containing the names of edge populations using this NodePopulation as
             target.
         """
         return set(
@@ -254,7 +273,7 @@ class NodePopulation:
         )
 
     @property
-    def config(self):
+    def config(self) -> dict[str, Any]:
         """Access the configuration for the population.
 
         This configuration is extended with:
@@ -265,7 +284,7 @@ class NodePopulation:
         return self._circuit.get_node_population_config(self.name)
 
     @property
-    def property_names(self):
+    def property_names(self) -> set[str]:
         """Set of available node properties.
 
         Notes:
@@ -273,14 +292,14 @@ class NodePopulation:
         """
         return self._property_names | self._dynamics_params_names
 
-    def container_property_names(self, container):
+    def container_property_names(self, container: builtins.type[ConstContainer]) -> list[str]:
         """Lists the ConstContainer properties shared with the NodePopulation.
 
         Args:
-            container (ConstContainer): a container class for node properties.
+            container: a container class for node properties.
 
         Returns:
-            list: A list of strings corresponding to the properties that you can use from the
+            A list of strings corresponding to the properties that you can use from the
             container class
 
         Examples:
@@ -295,16 +314,16 @@ class NodePopulation:
         in_file = self.property_names
         return [k for k in container.key_set() if container.get(k) in in_file]
 
-    def property_values(self, prop, is_present=False):
+    def property_values(self, prop: str, is_present: bool = False) -> set[Any]:
         """Set of values for a given property.
 
         Args:
-           prop (str): Name of the property to retrieve.
-           is_present (bool): if the field is categorical it forces the values to be actually
+           prop: Name of the property to retrieve.
+           is_present: if the field is categorical it forces the values to be actually
            present inside the dataset. (see: Notes for more information).
 
         Returns:
-            set: A set of the unique values of the property in the node population.
+            A set of the unique values of the property in the node population.
 
         Notes:
             For categorical fields returning 'unique' values can be confusing, see:
@@ -318,21 +337,21 @@ class NodePopulation:
         return set(res.unique())
 
     @cached_property
-    def property_dtypes(self):
+    def property_dtypes(self) -> pd.Series:
         """Returns the dtypes of all the properties.
 
         Returns:
-            pandas.Series: series indexed by field name with the corresponding dtype as value.
+            series indexed by field name with the corresponding dtype as value.
         """
         # read all the properties, without loading any node id
         return self._get_data(properties=None, node_ids=[]).dtypes.sort_index()
 
-    def _check_id(self, node_id):
+    def _check_id(self, node_id: int | np.integer) -> None:
         """Check that single node ID belongs to the circuit."""
         if node_id < 0 or node_id >= self.size:
             raise BluepySnapError(f"node ID not found: {node_id} in population '{self.name}'")
 
-    def _check_ids(self, node_ids):
+    def _check_ids(self, node_ids: Sequence[int] | npt.NDArray[np.integer]) -> None:
         """Check that node IDs belong to the circuit."""
         if len(node_ids) == 0:
             return
@@ -348,13 +367,15 @@ class NodePopulation:
                 f"All node IDs must be >= 0 and < {self.size} for population '{self.name}'"
             )
 
-    def _check_properties(self, properties):
+    def _check_properties(self, properties: set[str]) -> None:
         """Check if the properties exist inside the dataset."""
         unknown_props = properties - self.property_names
         if unknown_props:
             raise BluepySnapError(f"Unknown node properties: {sorted(unknown_props)}")
 
-    def _node_ids_by_filter(self, queries, raise_missing_prop):
+    def _node_ids_by_filter(
+        self, queries: Mapping[str, Any], raise_missing_prop: bool
+    ) -> npt.NDArray[np.intp]:
         """Return node IDs if their properties match the `queries` dict.
 
         `props` values could be:
@@ -380,25 +401,30 @@ class NodePopulation:
         idx = query.resolve_ids(data, self.name, self.type, queries)
         return idx.nonzero()[0]
 
-    def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
+    def ids(
+        self,
+        group: NodeGroup | NodeSet = None,
+        limit: int | None = None,
+        sample: int | None = None,
+        raise_missing_property: bool = True,
+    ) -> IdsArray:
         """Node IDs corresponding to node ``group``.
 
         Args:
-            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None):
-                See :ref:`Group Concept`
-            sample (int): If specified, randomly choose ``sample`` number of
+            group: See :ref:`Group Concept`
+            sample: If specified, randomly choose ``sample`` number of
                 IDs from the match result. If the size of the sample is greater than
                 the size of the NodePopulation then all ids are taken and shuffled.
 
-            limit (int): If specified, return the first ``limit`` number of
+            limit: If specified, return the first ``limit`` number of
                 IDs from the match result. If limit is greater than the size of the population
                 all node IDs are returned.
 
-            raise_missing_property (bool): if True, raises if a property is not listed in this
+            raise_missing_property: if True, raises if a property is not listed in this
                 population. Otherwise the ids are just not selected if a property is missing.
 
         Returns:
-            numpy.array: A numpy array of IDs.
+            A numpy array of IDs.
         """
         # pylint: disable=too-many-branches
         preserve_order = False
@@ -443,21 +469,54 @@ class NodePopulation:
         else:
             return np.unique(result)
 
-    def get(self, group=None, properties=None, raise_missing_property=True):
+    @overload
+    def get(self, group: NodeId, properties: str, raise_missing_property: bool = True) -> Any: ...
+    # pyright reports a partial overlap between CircuitNodeId and Sequence[int], but a
+    # CircuitNodeId (a str and an int) can't be a sequence of ints
+    @overload
+    def get(  # pyright: ignore[reportOverlappingOverload]
+        self,
+        group: NodeId,
+        properties: PropertyList | None = None,
+        raise_missing_property: bool = True,
+    ) -> pd.Series: ...
+    @overload
+    def get(
+        self, group: MultiNodeGroup, properties: str, raise_missing_property: bool = True
+    ) -> pd.Series: ...
+    @overload
+    def get(
+        self,
+        group: MultiNodeGroup = None,
+        *,
+        properties: str,
+        raise_missing_property: bool = True,
+    ) -> pd.Series: ...
+    @overload
+    def get(
+        self,
+        group: MultiNodeGroup = None,
+        properties: PropertyList | None = None,
+        raise_missing_property: bool = True,
+    ) -> pd.DataFrame: ...
+    def get(
+        self,
+        group: NodeGroup = None,
+        properties: str | PropertyList | None = None,
+        raise_missing_property: bool = True,
+    ) -> Any:
         """Node properties as a pandas Series or DataFrame.
 
         Args:
-            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None):
-                see :ref:`Group Concept`
-            properties (list|str|None): If specified, return only the properties in the list.
+            group: see :ref:`Group Concept`
+            properties: If specified, return only the properties in the list.
                 Otherwise, return all the properties.
-            raise_missing_property (bool): when a property used for filtering ids is not present in
+            raise_missing_property: when a property used for filtering ids is not present in
                 the population, raise an error if True, or return empty Series/DataFrame if False.
 
         Returns:
-            value/pandas.Series/pandas.DataFrame:
-                The type of the returned object depends on the type of the input parameters,
-                see the Examples for an explanation of the different cases.
+            The type of the returned object depends on the type of the input parameters,
+            see the Examples for an explanation of the different cases.
 
         Notes:
             The NodePopulation.property_names function will give you all the usable properties
@@ -522,16 +581,22 @@ class NodePopulation:
             else:
                 group = self.ids(group, raise_missing_property=raise_missing_property)
 
-        result = self._get_data(properties=properties)
+        # the type depends on group and properties, as described by the overloads
+        result: Any = self._get_data(properties=properties)
         result = result.loc[group] if group is not None else result
         result = result[properties] if properties is not None else result
         return result
 
-    def positions(self, group=None):
+    # see the comment about pyright in the overloads of get
+    @overload
+    def positions(self, group: NodeId) -> pd.Series: ...  # pyright: ignore[reportOverlappingOverload]
+    @overload
+    def positions(self, group: MultiNodeGroup = None) -> pd.DataFrame: ...
+    def positions(self, group: NodeGroup = None) -> pd.Series | pd.DataFrame:
         """Node position(s) as pandas Series or DataFrame.
 
         Args:
-            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): Which nodes will
+            group: Which nodes will
                 have their positions returned depends on the type of the ``group`` argument:
 
                 - ``int``, ``CircuitNodeId``: return the position of a single node.
@@ -542,20 +607,25 @@ class NodePopulation:
                 - ``None``: return the positions of all nodes.
 
         Returns:
-            pandas.Series/pandas.DataFrame:
-                Series of ('x', 'y', 'z') if single node ID is
-
-                passed as ``group``. Otherwise, a pandas.DataFrame of ('x', 'y', 'z') indexed
-                by node IDs.
+            Series of ('x', 'y', 'z') if single node ID is
+            passed as ``group``. Otherwise, a pandas.DataFrame of ('x', 'y', 'z') indexed
+            by node IDs.
         """
         result = self.get(group=group, properties=[Node.X, Node.Y, Node.Z])
         return result.astype(float)
 
-    def orientations(self, group=None):
+    # see the comment about pyright in the overloads of get
+    @overload
+    def orientations(  # pyright: ignore[reportOverlappingOverload]
+        self, group: NodeId
+    ) -> npt.NDArray[np.float64]: ...
+    @overload
+    def orientations(self, group: MultiNodeGroup = None) -> pd.Series: ...
+    def orientations(self, group: NodeGroup = None) -> npt.NDArray[np.float64] | pd.Series:
         """Node orientation(s) as a pandas numpy array or pandas Series.
 
         Args:
-            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): Which nodes will
+            group: Which nodes will
                 have their positions returned depends on the type of the ``group`` argument:
 
                 - ``int``, ``CircuitNodeId``: return the orientation of a single node.
@@ -566,9 +636,8 @@ class NodePopulation:
                 - ``None``: return the orientations of all nodes.
 
         Returns:
-            numpy.ndarray/pandas.Series:
-                A 3x3 rotation matrix if a single node ID is passed as ``group``.
-                Otherwise a pandas Series with rotation matrices indexed by node IDs.
+            A 3x3 rotation matrix if a single node ID is passed as ``group``.
+            Otherwise a pandas Series with rotation matrices indexed by node IDs.
         """
         # need to keep this quaternion ordering for quaternion2mat (expects w, x, y , z)
         props = np.array(
@@ -596,7 +665,7 @@ class NodePopulation:
 
         result = self.get(group=group, properties=props[props_mask])
 
-        def _get_values(prop):
+        def _get_values(prop: str) -> Any:
             """Retrieve prop from the result Dataframe/Series."""
             if isinstance(result, pd.Series):
                 return [result.get(prop, 0)]
@@ -607,11 +676,11 @@ class NodePopulation:
             return trans(*args)[0]
         return pd.Series(trans(*args), index=result.index, name="orientation")
 
-    def count(self, group=None):
+    def count(self, group: NodeGroup = None) -> int:
         """Total number of nodes for a given node group.
 
         Args:
-            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): Which nodes will
+            group: Which nodes will
                 have their positions returned depends on the type of the ``group`` argument:
 
                 - ``int``, ``CircuitNodeId``: return the count of a single node.
@@ -622,12 +691,12 @@ class NodePopulation:
                 - ``None``: return the count of all nodes.
 
         Returns:
-            int: The total number of nodes in a given group.
+            The total number of nodes in a given group.
         """
         return len(self.ids(group))
 
     @cached_property
-    def morph(self):
+    def morph(self) -> "MorphHelper":
         """Access to node morphologies."""
         from bluepysnap.morph import MorphHelper
 
@@ -638,19 +707,19 @@ class NodePopulation:
         )
 
     @cached_property
-    def models(self):
+    def models(self) -> "NeuronModelsHelper":
         """Access to node neuron models."""
         from bluepysnap.neuron_models import NeuronModelsHelper
 
         return NeuronModelsHelper(self._properties, self)
 
     @property
-    def h5_filepath(self):
+    def h5_filepath(self) -> str:
         """Get the H5 nodes file associated with population."""
         return self.config["nodes_file"]
 
     @cached_property
-    def spatial_segment_index(self):
+    def spatial_segment_index(self) -> Any:
         """Access to edges spatial index."""
         from brain_indexer import open_index
 
@@ -659,11 +728,11 @@ class NodePopulation:
             raise BluepySnapError(f"It appears {self.name} does not have segment indices")
         return open_index(index_dir)
 
-    def __getstate__(self):
+    def __getstate__(self) -> tuple["Circuit", str]:
         """Make NodePopulation pickle-able, without storing state of caches."""
         return (self._circuit, self.name)
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: tuple["Circuit", str]) -> None:
         """Load from pickle state."""
         circuit, name = state
         self.__init__(circuit=circuit, population_name=name)

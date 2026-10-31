@@ -6,7 +6,7 @@
 
 # -- Path setup --------------------------------------------------------------
 
-import importlib
+import importlib.metadata
 import re
 import subprocess
 

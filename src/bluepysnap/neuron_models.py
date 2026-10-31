@@ -18,24 +18,29 @@
 """Neuron models access."""
 
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
+from bluepysnap._typing import NodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
 from bluepysnap.utils import is_node_id
+
+if TYPE_CHECKING:
+    from bluepysnap.nodes.node_population import NodePopulation
 
 
 class NeuronModelsHelper:
     """Collection of neuron models related methods."""
 
-    def __init__(self, properties, population):
+    def __init__(self, properties: Any, population: "NodePopulation") -> None:
         """Constructor.
 
         Args:
-            properties (libsonata.PopulationProperties): properties of the population
-            population (NodePopulation): NodePopulation object used to query the nodes.
+            properties: properties of the population, as returned by libsonata
+            population: NodePopulation object used to query the nodes.
 
         Returns:
-            NeuronModelsHelper: A NeuronModelsHelper object.
+            A NeuronModelsHelper object.
         """
         # all nodes from a population must have the same model type
         if properties.type != "biophysical":
@@ -44,14 +49,14 @@ class NeuronModelsHelper:
         self._properties = properties
         self._population = population
 
-    def get_filepath(self, node_id):
+    def get_filepath(self, node_id: NodeId) -> Path:
         """Return path to model file corresponding to `node_id`.
 
         Args:
-            node_id (int|CircuitNodeId): node id
+            node_id: node id
 
         Returns:
-            Path: path to the model file of neuron
+            path to the model file of neuron
         """
         if not is_node_id(node_id):
             raise BluepySnapError("node_id must be a int or a CircuitNodeId")

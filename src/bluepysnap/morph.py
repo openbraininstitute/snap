@@ -17,37 +17,48 @@
 
 """Morphology access."""
 
+from collections.abc import Mapping
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import morph_tool.transform as transformations
 import morphio
 import numpy as np
 
+from bluepysnap._typing import NodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.morph_constants import EXTENSIONS_MAPPING
 from bluepysnap.sonata_constants import Node
 from bluepysnap.utils import is_node_id
 
+if TYPE_CHECKING:
+    from bluepysnap.nodes.node_population import NodePopulation
+
 
 class MorphHelper:
     """Collection of morphology-related methods."""
 
-    def __init__(self, morph_dir, population, alternate_morphologies=None):
+    def __init__(
+        self,
+        morph_dir: str | None,
+        population: "NodePopulation",
+        alternate_morphologies: Mapping[str, str] | None = None,
+    ) -> None:
         """Initializes a MorphHelper object from a directory path and a NodePopulation object.
 
         Args:
-            morph_dir (str): Path to the directory containing the node morphologies.
-            population (NodePopulation): NodePopulation object used to query the nodes.
-            alternate_morphologies (dict): Dictionary containing paths to alternate morphologies.
+            morph_dir: Path to the directory containing the node morphologies.
+            population: NodePopulation object used to query the nodes.
+            alternate_morphologies: Dictionary containing paths to alternate morphologies.
 
         Returns:
-            MorphHelper: A MorphHelper object.
+            A MorphHelper object.
         """
         self._morph_dir = morph_dir or ""
         self._alternate_morphologies = alternate_morphologies or {}
         self._population = population
 
-    def _get_morphology_base(self, extension):
+    def _get_morphology_base(self, extension: str) -> str:
         """Get morphology base path; this will be a directory unless it's a morphology container."""
         if extension == "swc":
             if not self._morph_dir:
@@ -64,7 +75,7 @@ class MorphHelper:
 
         return morph_dir
 
-    def get_morphology_dir(self, extension="swc"):
+    def get_morphology_dir(self, extension: str = "swc") -> str:
         """Return morphology directory based on a given extension."""
         morph_dir = self._get_morphology_base(extension)
 
@@ -75,7 +86,7 @@ class MorphHelper:
 
         return morph_dir
 
-    def get_name(self, node_id):
+    def get_name(self, node_id: NodeId) -> str:
         """Get the morphology name for a `node_id`."""
         if not is_node_id(node_id):
             raise BluepySnapError("node_id must be a int or a CircuitNodeId")
@@ -83,25 +94,27 @@ class MorphHelper:
         name = self._population.get(node_id, Node.MORPHOLOGY)
         return name
 
-    def get_filepath(self, node_id, extension="swc"):
+    def get_filepath(self, node_id: NodeId, extension: str = "swc") -> Path:
         """Return path to SWC morphology file corresponding to `node_id`.
 
         Args:
-            node_id (int/CircuitNodeId): could be a int or CircuitNodeId.
-            extension (str): expected filetype extension of the morph file.
+            node_id: could be a int or CircuitNodeId.
+            extension: expected filetype extension of the morph file.
         """
         name = self.get_name(node_id)
 
         return Path(self.get_morphology_dir(extension), f"{name}.{extension}")
 
-    def get(self, node_id, transform=False, extension="swc"):
+    def get(
+        self, node_id: NodeId, transform: bool = False, extension: str = "swc"
+    ) -> morphio.Morphology:
         """Return MorphIO morphology object corresponding to `node_id`.
 
         Args:
-            node_id (int/CircuitNodeId): could be a single int or a CircuitNodeId.
-            transform (bool): If `transform` is True, rotate and translate morphology points
+            node_id: could be a single int or a CircuitNodeId.
+            transform: If `transform` is True, rotate and translate morphology points
                 according to `node_id` position in the circuit.
-            extension (str): expected filetype extension of the morph file.
+            extension: expected filetype extension of the morph file.
         """
         collection = morphio.Collection(
             self._get_morphology_base(extension),

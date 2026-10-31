@@ -254,7 +254,7 @@ class Edges(
             properties: An edge property name, a list of edge property names, or None.
 
         Returns:
-            - CircuitEdgeIds, if ``properties`` is None;
+            - CircuitEdgeIds, if ``properties`` is None or empty;
             - Otherwise a generator, as returned by :meth:`Edges.get`.
         """
         return self._pathway_edges(source=None, target=node_id, properties=properties)
@@ -275,7 +275,7 @@ class Edges(
             properties: None / edge property name / list of edge property names
 
         Returns:
-            - CircuitEdgeIds, if ``properties`` is None;
+            - CircuitEdgeIds, if ``properties`` is None or empty;
             - Otherwise a generator, as returned by :meth:`Edges.get`.
         """
         return self._pathway_edges(source=node_id, target=None, properties=properties)
@@ -305,7 +305,7 @@ class Edges(
             properties: None / edge property name / list of edge property names
 
         Returns:
-            - CircuitEdgeIds, if ``properties`` is None;
+            - CircuitEdgeIds, if ``properties`` is None or empty;
             - Otherwise a generator, as returned by :meth:`Edges.get`.
         """
         return self._pathway_edges(

@@ -506,7 +506,7 @@ class EdgePopulation:
         Returns:
             - A pandas Series indexed by edge ID if ``properties`` is a string.
             - A pandas DataFrame indexed by edge ID if ``properties`` is a list.
-            - A numpy array of edge IDs, if ``properties`` is None.
+            - A numpy array of edge IDs, if ``properties`` is None or empty.
         """
         return self._pathway_edges(source=None, target=node_id, properties=properties)
 
@@ -526,7 +526,7 @@ class EdgePopulation:
             properties: None / edge property name / list of edge property names
 
         Returns:
-            - A numpy array of edge IDs, if ``properties`` is None;
+            - A numpy array of edge IDs, if ``properties`` is None or empty;
             - Pandas Series indexed by edge IDs if ``properties`` is string;
             - Pandas DataFrame indexed by edge IDs if ``properties`` is list.
         """
@@ -558,7 +558,7 @@ class EdgePopulation:
             properties: None / edge property name / list of edge property names
 
         Returns:
-            - A numpy array of edge IDs, if ``properties`` is None;
+            - A numpy array of edge IDs, if ``properties`` is None or empty;
             - Pandas Series indexed by edge IDs if ``properties`` is string;
             - Pandas DataFrame indexed by edge IDs if ``properties`` is list.
         """

@@ -1,14 +1,27 @@
 """Module to process search queries of nodes/edges."""
 
 import operator
-from collections.abc import Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from copy import deepcopy
 from functools import reduce
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 import numpy as np
+import numpy.typing as npt
+import pandas as pd
 
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
+
+if TYPE_CHECKING:
+    from bluepysnap.node_sets import NodeSets
+    from bluepysnap.nodes.node_population import NodePopulation
+
+# A boolean mask selecting the rows of a DataFrame. True and False select all or none of the rows.
+Mask: TypeAlias = bool | npt.NDArray[np.bool_]
+# A query, as described in the documentation of NodePopulation.ids: a dict from property names
+# or special keys (e.g. ``$or``, ``$node_set``) to values.
+Queries: TypeAlias = dict[str, Any]
 
 # this constant is not part of the sonata standard
 NODE_ID_KEY = "node_id"
@@ -31,7 +44,7 @@ ALL_KEYS = {
 } | VALUE_KEYS
 
 
-def _logical_and(masks):
+def _logical_and(masks: Iterable[bool | npt.ArrayLike]) -> Mask:
     """Calculate and return the "logical and" of the given masks.
 
     Args:
@@ -54,7 +67,7 @@ def _logical_and(masks):
     return reduce(operator.and_, (np.asarray(m, dtype=bool) for m in filtered_masks))
 
 
-def _logical_or(masks):
+def _logical_or(masks: Iterable[bool | npt.ArrayLike]) -> Mask:
     """Calculate and return the "logical or" of the given masks.
 
     Args:
@@ -77,8 +90,8 @@ def _logical_or(masks):
     return reduce(operator.or_, (np.asarray(m, dtype=bool) for m in filtered_masks))
 
 
-def _complex_query(prop, query):
-    result = True
+def _complex_query(prop: pd.Series, query: Mapping[str, str]) -> Mask:
+    result: Mask = True
     for key, value in query.items():
         if key == REGEX_KEY:
             result = _logical_and([result, prop.str.match(value + r"\Z")])
@@ -87,12 +100,14 @@ def _complex_query(prop, query):
     return result
 
 
-def _positional_mask(data, ids):
+def _positional_mask(
+    data: pd.DataFrame, ids: int | Sequence[int] | npt.NDArray[np.integer] | None
+) -> Mask:
     """Positional mask for the node IDs.
 
     Args:
-        data (pd.DataFrame): data
-        ids (None/numpy.ndarray): the ids array. If None all ids are selected.
+        data: data
+        ids: the ids array. If None all ids are selected.
 
     Examples:
         if the data set contains 5 nodes:
@@ -105,12 +120,14 @@ def _positional_mask(data, ids):
     elif len(ids) == 0:
         return False
     mask = np.full(len(data), fill_value=False)
-    indices = data.index.get_indexer(ids)
+    indices = data.index.get_indexer(pd.Index(ids, copy=False))
     mask[indices[indices > -1]] = True
     return mask
 
 
-def _circuit_mask(data, population_name, population_type, queries):
+def _circuit_mask(
+    data: pd.DataFrame, population_name: str, population_type: str, queries: dict[str, Any]
+) -> tuple[dict[str, Any], Mask]:
     """Handle the population, node ID queries."""
     populations = queries.pop(POPULATION_KEY, None)
     types = queries.pop(POPULATION_TYPE_KEY, None)
@@ -123,7 +140,9 @@ def _circuit_mask(data, population_name, population_type, queries):
     return queries, _positional_mask(data, ids)
 
 
-def _properties_mask(data, population_name, population_type, queries):
+def _properties_mask(
+    data: pd.DataFrame, population_name: str, population_type: str, queries: dict[str, Any]
+) -> Mask:
     """Return mask of IDs matching `props` dict."""
     unknown_props = set(queries) - set(data.columns) - ALL_KEYS
     if unknown_props:
@@ -149,12 +168,14 @@ def _properties_mask(data, population_name, population_type, queries):
     return mask
 
 
-def traverse_queries_bottom_up(queries, traverse_fn):
+def traverse_queries_bottom_up(
+    queries: dict[str, Any], traverse_fn: Callable[[dict[str, Any], str], None]
+) -> None:
     """Traverse queries tree from leaves to root, left to right.
 
     Args:
-        queries (dict): queries
-        traverse_fn (function): function to execute on each node of `queries` in traverse order
+        queries: queries
+        traverse_fn: function to execute on each node of `queries` in traverse order
     """
     for key in list(queries.keys()):
         if key in {OR_KEY, AND_KEY}:
@@ -169,39 +190,44 @@ def traverse_queries_bottom_up(queries, traverse_fn):
         traverse_fn(queries, key)
 
 
-def get_properties(queries):
+def get_properties(queries: dict[str, Any]) -> set[str]:
     """Extracts properties names from `queries`.
 
     Args:
-        queries (dict): queries
+        queries: queries
 
     Returns:
-        set: set of properties names
+        set of properties names
     """
 
-    def _collect(_, query_key):
+    def _collect(_: dict[str, Any], query_key: str) -> None:
         if query_key not in ALL_KEYS:
             props.add(query_key)
 
-    props = set()
+    props: set[str] = set()
     traverse_queries_bottom_up(queries, _collect)
     return props
 
 
-def resolve_nodesets(node_sets, population, queries, raise_missing_prop):
+def resolve_nodesets(
+    node_sets: "NodeSets",
+    population: "NodePopulation",
+    queries: Queries,
+    raise_missing_prop: bool,
+) -> dict[str, Any]:
     """Resolve node sets in queries.
 
     Args:
-        node_sets (bluepysnap.NodeSets): node sets instance
-        population (bluepysnap.NodePopulation): node population
-        queries (dict): queries to resolve
-        raise_missing_prop (bool): raise if property not present in population
+        node_sets: node sets instance
+        population: node population
+        queries: queries to resolve
+        raise_missing_prop: raise if property not present in population
 
     Returns:
-        dict: queries with resolved node sets
+        queries with resolved node sets
     """
 
-    def _resolve(queries, queries_key):
+    def _resolve(queries: dict[str, Any], queries_key: str) -> None:
         if queries_key == NODE_SET_KEY:
             if AND_KEY not in queries:
                 queries[AND_KEY] = []
@@ -217,23 +243,25 @@ def resolve_nodesets(node_sets, population, queries, raise_missing_prop):
     return resolved_queries
 
 
-def resolve_ids(data, population_name, population_type, queries):
+def resolve_ids(
+    data: pd.DataFrame, population_name: str, population_type: str, queries: Queries
+) -> npt.NDArray[np.bool_]:
     """Returns an index mask of `data` for given `queries`.
 
     Args:
-        data (pd.DataFrame): data
-        population_name (str): population name of `data`
-        population_type (str): population type
-        queries (dict): queries
+        data: data
+        population_name: population name of `data`
+        population_type: population type
+        queries: queries
 
     Returns:
-        np.array: index mask
+        index mask
     """
 
-    def _merge_queries_masks(queries):
+    def _merge_queries_masks(queries: dict[str, Any]) -> Mask:
         return _logical_and(queries.values())
 
-    def _collect(queries, queries_key):
+    def _collect(queries: dict[str, Any], queries_key: str) -> None:
         # each queries value is replaced with a bit mask of corresponding ids
         if queries_key == OR_KEY:
             # children are already resolved masks due to traverse order

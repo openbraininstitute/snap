@@ -265,6 +265,57 @@ def test_validate_nodes_biophysical_missing_required(missing):
 
 
 @pytest.mark.parametrize(
+    "ignored",
+    (
+        ["model_template"],
+        ["dynamics_params"],
+        ["model_template", "dynamics_params"],
+    ),
+)
+def test_validate_nodes_ignore_node_properties(ignored):
+    """Required node properties listed in ignore_node_properties are not enforced."""
+    with copy_test_data() as (circuit_copy_path, _):
+        nodes_file = circuit_copy_path / "nodes_single_pop.h5"
+        with h5py.File(nodes_file, "r+") as h5f:
+            for prop in ignored:
+                del h5f[f"nodes/default/0/{prop}"]
+
+        errors = test_module.validate_nodes_schema(
+            str(nodes_file), "biophysical", ignore_datatype_errors=False
+        )
+        assert len(errors) == 1
+        for prop in ignored:
+            assert f"'{prop}' is a required property" in errors[0].message
+
+        errors = test_module.validate_nodes_schema(
+            str(nodes_file),
+            "biophysical",
+            ignore_datatype_errors=False,
+            ignore_node_properties=ignored,
+        )
+        assert len(errors) == 0
+
+
+def test_validate_nodes_ignore_node_properties_still_reports_others():
+    """Ignoring some properties does not suppress other missing required properties."""
+    with copy_test_data() as (circuit_copy_path, _):
+        nodes_file = circuit_copy_path / "nodes_single_pop.h5"
+        with h5py.File(nodes_file, "r+") as h5f:
+            del h5f["nodes/default/0/model_template"]
+            del h5f["nodes/default/0/morphology"]
+
+        errors = test_module.validate_nodes_schema(
+            str(nodes_file),
+            "biophysical",
+            ignore_datatype_errors=False,
+            ignore_node_properties=["model_template"],
+        )
+        assert len(errors) == 1
+        assert "'model_template' is a required property" not in errors[0].message
+        assert "'morphology' is a required property" in errors[0].message
+
+
+@pytest.mark.parametrize(
     "missing",
     (
         "edges",

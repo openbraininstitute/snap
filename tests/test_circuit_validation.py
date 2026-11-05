@@ -333,6 +333,71 @@ def test_ok_bio_model_type_in_library():
         assert errors == set()
 
 
+def _make_structural_biophysical_circuit(circuit_copy_path, config_copy_path):
+    """Make a biophysical circuit with no electrical cell models and a missing models directory."""
+    with edit_config(config_copy_path) as config:
+        config["components"]["biophysical_neuron_models_dir"] = "nonexistent_hoc_dir"
+
+    nodes_file = circuit_copy_path / "nodes.h5"
+    with h5py.File(nodes_file, "r+") as h5f:
+        for pop in ("default", "default2"):
+            for prop in ("model_template", "dynamics_params"):
+                del h5f[f"nodes/{pop}/0/{prop}"]
+
+
+def test_ignore_node_properties_structural_circuit_ok():
+    """Ignoring the electrical node properties lets a structural circuit validate."""
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        _make_structural_biophysical_circuit(circuit_copy_path, config_copy_path)
+
+        errors = test_module.validate(
+            str(config_copy_path),
+            skip_slow=True,
+            only_errors=True,
+            print_errors=False,
+            ignore_node_properties=("model_template", "dynamics_params"),
+        )
+        assert errors == set()
+
+
+def test_ignore_node_properties_default_is_strict():
+    """Without the option, the structural circuit still fails."""
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        _make_structural_biophysical_circuit(circuit_copy_path, config_copy_path)
+
+        errors = test_module.validate(
+            str(config_copy_path), skip_slow=True, only_errors=True, print_errors=False
+        )
+        messages = "\n".join(str(e) for e in errors)
+        assert "'model_template' is a required property" in messages
+        assert "'dynamics_params' is a required property" in messages
+        assert 'Invalid components "biophysical_neuron_models_dir"' in messages
+
+
+def test_ignore_node_properties_models_dir_must_still_be_declared():
+    """'biophysical_neuron_models_dir' must still be declared even when its existence is skipped."""
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        _make_structural_biophysical_circuit(circuit_copy_path, config_copy_path)
+        with edit_config(config_copy_path) as config:
+            del config["components"]["biophysical_neuron_models_dir"]
+
+        errors = test_module.validate(
+            str(config_copy_path),
+            skip_slow=True,
+            only_errors=True,
+            print_errors=False,
+            ignore_node_properties=("model_template", "dynamics_params"),
+        )
+        assert errors == {
+            BluepySnapValidationError.fatal(
+                "'biophysical_neuron_models_dir' not defined for population 'default'",
+            ),
+            BluepySnapValidationError.fatal(
+                "'biophysical_neuron_models_dir' not defined for population 'default2'",
+            ),
+        }
+
+
 def test_no_bio_component_dirs():
     dirs = ["morphologies_dir", "biophysical_neuron_models_dir"]
     with copy_test_data() as (_, config_copy_path):

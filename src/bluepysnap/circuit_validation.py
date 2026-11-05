@@ -169,7 +169,7 @@ def _nodes_group_to_dataframe(group, population):
     return df
 
 
-def _check_bio_nodes_group(group_df, group, population, population_name):
+def _check_bio_nodes_group(group_df, group, population, population_name, ignore_node_properties):
     """Checks biophysical nodes group for errors.
 
     Args:
@@ -177,6 +177,8 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
         group (h5py.Group): nodes group in nodes .h5 file
         population (dict): a merged dictionary (current population and 'components' in config)
         population_name (str): name of the population
+        ignore_node_properties(Iterable[str]): Node properties to ignore when validating. Ignoring
+            'model_template' also skips the 'biophysical_neuron_models_dir' existence check.
 
     Returns:
         list: List of errors, empty if no errors
@@ -252,17 +254,19 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
                 )
 
     if "biophysical_neuron_models_dir" in population:
-        errors += _check_components_dir("biophysical_neuron_models_dir", population)
+        # The directory must be declared, but its existence is only checked for electrical models.
+        if "model_template" not in ignore_node_properties:
+            errors += _check_components_dir("biophysical_neuron_models_dir", population)
 
-        bio_path = Path(population["biophysical_neuron_models_dir"])
-        L.debug("Checking neuron model files: %s", bio_path)
-        errors += _check_files(
-            f"model_template: {group_name}[{group.file.filename}]",
-            (
-                bio_path / _get_model_template_file(m)
-                for m in group_df.get("model_template", pd.Series(dtype="object")).unique()
-            ),
-        )
+            bio_path = Path(population["biophysical_neuron_models_dir"])
+            L.debug("Checking neuron model files: %s", bio_path)
+            errors += _check_files(
+                f"model_template: {group_name}[{group.file.filename}]",
+                (
+                    bio_path / _get_model_template_file(m)
+                    for m in group_df.get("model_template", pd.Series(dtype="object")).unique()
+                ),
+            )
     else:
         errors.append(
             BluepySnapValidationError.fatal(
@@ -272,7 +276,7 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
     return errors
 
 
-def _check_nodes_group(group_df, group, population, population_name):
+def _check_nodes_group(group_df, group, population, population_name, ignore_node_properties):
     """Validates nodes group in nodes population.
 
     Args:
@@ -280,6 +284,7 @@ def _check_nodes_group(group_df, group, population, population_name):
         group (h5py.Group): nodes group in nodes .h5 file
         population (dict): the node population config merged with the components config
         population_name (str): the name of the population
+        ignore_node_properties(Iterable[str]): Node properties to ignore when validating
 
     Returns:
         list: List of errors, empty if no errors
@@ -297,18 +302,21 @@ def _check_nodes_group(group_df, group, population, population_name):
         )
 
     if population["type"] == "biophysical":
-        return errors + _check_bio_nodes_group(group_df, group, population, population_name)
+        return errors + _check_bio_nodes_group(
+            group_df, group, population, population_name, ignore_node_properties
+        )
 
     return errors
 
 
-def validate_node_population(nodes_file, population_dict, name: str):
+def validate_node_population(nodes_file, population_dict, name: str, ignore_node_properties):
     """Validates nodes population.
 
     Args:
         nodes_file (str): path to the nodes file (.h5)
         population_dict (dict): the node population config merged with the components config
         name: population name
+        ignore_node_properties(Iterable[str]): Node properties to ignore when validating
 
     Returns:
         list: List of errors, empty if no errors
@@ -329,7 +337,9 @@ def validate_node_population(nodes_file, population_dict, name: str):
             group = population["0"]
             group_df = _nodes_group_to_dataframe(group, population)
             if len(group_df) > 0:
-                return _check_nodes_group(group_df, group, population_dict, name)
+                return _check_nodes_group(
+                    group_df, group, population_dict, name, ignore_node_properties
+                )
 
     return []
 
@@ -574,13 +584,14 @@ def validate_edges_dict(
     return errors
 
 
-def validate_nodes_dict(nodes_dict, components, ignore_datatype_errors):
+def validate_nodes_dict(nodes_dict, components, ignore_datatype_errors, ignore_node_properties):
     """Validate an item in the "nodes" list.
 
     Args:
         nodes_dict (dict): nodes population, represented by an item of "nodes" in ``config``
         components(dict): "components" part of the ``config``
         ignore_datatype_errors(bool): Don't check if datatypes are correct
+        ignore_node_properties(Iterable[str]): Node properties to ignore when validating
 
     Returns:
         list: List of errors, empty if no errors
@@ -597,15 +608,24 @@ def validate_nodes_dict(nodes_dict, components, ignore_datatype_errors):
                 population["type"],
                 ignore_datatype_errors,
                 population_name=pop_name,
+                ignore_node_properties=ignore_node_properties,
             )
-            errors += validate_node_population(nodes_file, population, pop_name)
+            errors += validate_node_population(
+                nodes_file, population, pop_name, ignore_node_properties
+            )
         else:
             errors.append(BluepySnapValidationError.fatal(f'Invalid "nodes_file": {nodes_file}'))
 
     return errors
 
 
-def validate_networks(config, skip_slow, ignore_datatype_errors, ignore_edge_properties):
+def validate_networks(
+    config,
+    skip_slow,
+    ignore_datatype_errors,
+    ignore_edge_properties,
+    ignore_node_properties,
+):
     """Validate "networks" part of the config.
 
     Acts as a starting point of validation.
@@ -619,7 +639,9 @@ def validate_networks(config, skip_slow, ignore_datatype_errors, ignore_edge_pro
 
     for nodes_dict in nodes:
         if "nodes_file" in nodes_dict:
-            errors += validate_nodes_dict(nodes_dict, components, ignore_datatype_errors)
+            errors += validate_nodes_dict(
+                nodes_dict, components, ignore_datatype_errors, ignore_node_properties
+            )
     for edges_dict in config["networks"].get("edges", []):
         if "edges_file" in edges_dict:
             errors += validate_edges_dict(
@@ -640,6 +662,7 @@ def validate(
     print_errors=True,
     ignore_datatype_errors=False,
     ignore_edge_properties=(),
+    ignore_node_properties=(),
 ):
     """Validates Sonata circuit.
 
@@ -650,6 +673,8 @@ def validate(
         print_errors (bool): print errors
         ignore_datatype_errors(bool): Don't check if datatypes are correct
         ignore_edge_properties(Iterable[str]): Edge properties to ignore when validating
+        ignore_node_properties(Iterable[str]): Node properties to ignore when validating. Ignoring
+            'model_template' also skips the 'biophysical_neuron_models_dir' existence check.
 
     Returns:
         set: set of errors, empty if no errors
@@ -659,7 +684,11 @@ def validate(
 
     if "networks" in config:
         errors += validate_networks(
-            config, skip_slow, ignore_datatype_errors, ignore_edge_properties
+            config,
+            skip_slow,
+            ignore_datatype_errors,
+            ignore_edge_properties,
+            ignore_node_properties,
         )
 
     if _check_partial_circuit_config(config):

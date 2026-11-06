@@ -199,7 +199,9 @@ def validate_circuit_schema(path, config, ignore_datatype_errors):
     return _wrap_errors(path, errors, ".", ignore_datatype_errors)
 
 
-def validate_nodes_schema(path, nodes_type, ignore_datatype_errors, population_name=None):
+def validate_nodes_schema(
+    path, nodes_type, ignore_datatype_errors, population_name=None, ignore_node_properties=()
+):
     """Validates a nodes file against a schema.
 
     Args:
@@ -209,6 +211,7 @@ def validate_nodes_schema(path, nodes_type, ignore_datatype_errors, population_n
         population_name (str): if given, validate only this population against ``nodes_type``;
             other populations in the file are left untouched. If ``None``, every population in
             the file is validated against ``nodes_type``.
+        ignore_node_properties(Iterable[str]): Node properties to ignore when validating
 
     Returns:
         list: List of errors, empty if no errors
@@ -224,7 +227,13 @@ def validate_nodes_schema(path, nodes_type, ignore_datatype_errors, population_n
                 "nodes": {population_name: populations[population_name]},
             }
 
-    errors = _validate_schema_for_dict(_parse_schema("node", nodes_type), nodes_h5_dict)
+    schema = _parse_schema("node", nodes_type)
+
+    node_group = schema["properties"]["nodes"]["patternProperties"][""]["properties"]["0"]
+    required = node_group.get("required", [])
+    node_group["required"] = list(set(required) - set(ignore_node_properties))
+
+    errors = _validate_schema_for_dict(schema, nodes_h5_dict)
 
     return _wrap_errors(path, errors, "/", ignore_datatype_errors)
 

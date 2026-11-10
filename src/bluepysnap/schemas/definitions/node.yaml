@@ -24,9 +24,6 @@ $node_file_defs:
                 properties:
                   dynamics_params:
                     type: object
-                    required:
-                      - threshold_current
-                      - holding_current
                     properties:
                       AIS_scaler:
                         $ref: "#/$typedefs/float32"

@@ -18,7 +18,9 @@ from bluepysnap.exceptions import BluepySnapValidationError
         ["definitions", "edge"],
         ["node", "biophysical"],
         ["node", "virtual"],
+        ["node", "nest_point"],
         ["edge", "chemical"],
+        ["edge", "nest_chemical"],
         ["edge", "electrical"],
         ["edge", "chemical_virtual"],
     ),
@@ -638,3 +640,75 @@ def test_edges_schema_types():
 
     assert "endfoot_id" in edge_property_types
     assert edge_property_types["endfoot_id"] == [np.uint8, np.uint16, np.uint32, np.uint64]
+
+
+def _write_nest_nodes(path, model_type="nest_point", dynamics_params=True, model_template=True):
+    with h5py.File(path, "w") as h5f:
+        pop = h5f.create_group("nodes/exc")
+        pop.create_dataset("node_type_id", data=np.full(2, -1, dtype=np.int64))
+        group = pop.create_group("0")
+        string = h5py.string_dtype()
+        group.create_dataset(
+            "model_type", data=np.array([model_type] * 2, dtype=object), dtype=string
+        )
+        if model_template:
+            group.create_dataset(
+                "model_template", data=np.array(["iaf", "iaf"], dtype=object), dtype=string
+            )
+        if dynamics_params:
+            group.create_group("dynamics_params").create_dataset(
+                "C_m", data=np.ones(2, dtype=np.float32)
+            )
+
+
+def test_validate_nodes_nest_point_ok(tmp_path):
+    nodes_file = tmp_path / "nodes.h5"
+    _write_nest_nodes(nodes_file)
+    assert test_module.validate_nodes_schema(str(nodes_file), "nest_point", False) == []
+
+
+@pytest.mark.parametrize("missing", ["model_template", "model_type"])
+def test_validate_nodes_nest_point_missing_required(tmp_path, missing):
+    nodes_file = tmp_path / "nodes.h5"
+    _write_nest_nodes(nodes_file)
+    with h5py.File(nodes_file, "r+") as h5f:
+        del h5f[f"nodes/exc/0/{missing}"]
+    errors = test_module.validate_nodes_schema(str(nodes_file), "nest_point", False)
+    assert len(errors) == 1
+    assert f"'{missing}' is a required property" in errors[0].message
+
+
+def _write_nest_edges(path, model_template=True):
+    with h5py.File(path, "w") as h5f:
+        pop = h5f.create_group("edges/exc__exc")
+        pop.create_dataset("edge_type_id", data=np.full(2, -1, dtype=np.int64))
+        for name in ("source_node_id", "target_node_id"):
+            ids = pop.create_dataset(name, data=np.array([0, 1], dtype=np.uint64))
+            ids.attrs["node_population"] = "exc"
+        group = pop.create_group("0")
+        if model_template:
+            group.create_dataset(
+                "model_template",
+                data=np.array(["static", "static"], dtype=object),
+                dtype=h5py.string_dtype(),
+            )
+        group.create_dataset("syn_weight", data=np.ones(2, dtype=np.float32))
+
+
+def test_validate_edges_nest_chemical_ok(tmp_path):
+    edges_file = tmp_path / "edges.h5"
+    _write_nest_edges(edges_file)
+    errors = test_module.validate_edges_schema(
+        str(edges_file), "nest_chemical", False, False, ignore_edge_properties=()
+    )
+    assert errors == []
+
+
+def test_validate_edges_nest_chemical_missing_model_template(tmp_path):
+    edges_file = tmp_path / "edges.h5"
+    _write_nest_edges(edges_file, model_template=False)
+    errors = test_module.validate_edges_schema(
+        str(edges_file), "nest_chemical", False, False, ignore_edge_properties=()
+    )
+    assert len(errors) == 1
+    assert "'model_template' is a required property" in errors[0].message

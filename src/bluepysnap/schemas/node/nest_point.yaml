@@ -1,0 +1,15 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Nodes - NEST point neuron
+description: schema for NEST point neuron nodes
+allOf: [{ $ref: "#/$node_file_defs/nodes_file_root" }]
+properties:
+  nodes:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              # https://sonata-extension.readthedocs.io/en/latest/sonata_nest.html
+              - model_template
+              - model_type

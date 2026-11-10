@@ -25,3 +25,8 @@ properties:
               - mtype
               - synapse_class
               - dynamics_params
+            properties:
+              dynamics_params:
+                required:
+                  - threshold_current
+                  - holding_current

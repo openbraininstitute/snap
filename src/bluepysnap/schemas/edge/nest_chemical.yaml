@@ -1,0 +1,14 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Edges - NEST chemical synapse
+description: schema for NEST chemical synapse edges
+allOf: [{ $ref: "#/$edge_file_defs/edges_file_root" }]
+properties:
+  edges:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              # https://sonata-extension.readthedocs.io/en/latest/sonata_nest.html
+              - model_template
